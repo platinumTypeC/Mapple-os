@@ -4,7 +4,7 @@ SRCFILES       := $(shell find . -name '*.c')
 OBJS            = $(SRCFILES:.c=.o)
 TARGET          = $(SRCFILES:.c=.efi)
 
-EFILIB          = /usr/local/lib
+EFILIB          = ./lib
 EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
 
@@ -30,7 +30,10 @@ all: $(TARGET)
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
 
-installs:
+install:
+	sudo apt install -y binutils
+	sudo apt install -y gcc
+	sudo apt install -y ccd2iso
 	sudo apt install -y genisoimage
 
 setup:
