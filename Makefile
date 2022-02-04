@@ -31,10 +31,10 @@ all: $(TARGET)
 		--target=efi-app-$(ARCH) $^ $@
 
 install:
-	sudo apt install -y binutils
-	sudo apt install -y gcc
-	sudo apt install -y ccd2iso
-	sudo apt install -y genisoimage
+	@sudo apt install -y binutils
+	@sudo apt install -y gcc
+	@sudo apt install -y ccd2iso
+	@sudo apt install -y genisoimage
 
 setup:
 	@mkdir -p dist
