@@ -30,4 +30,26 @@ all: $(TARGET)
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
 
-iso:
+installs:
+	sudo apt install -y genisoimage
+
+setup:
+	@mkdir -p dist
+	@mkdir -p dist/iso
+
+iso: setup
+	cp src/main.efi dist/iso/
+	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
+	mformat -i dist/iso/Mapple.img ::
+	mcopy -i dist/iso/Mapple.img dist/iso/main.efi ::
+#   mdir just prints its contents if you would like to have a look:
+#
+#   mdir -i dist/iso/Mapple.img ::
+#
+
+createImage: dist/iso/Mapple.img
+	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
+
+clean:
+	rm -rf *.img *.o *.so *.iso *.efi
+	rm -rf dist
