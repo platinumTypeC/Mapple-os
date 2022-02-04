@@ -53,3 +53,8 @@ createImage: dist/iso/Mapple.img
 clean:
 	rm -rf *.img *.o *.so *.iso *.efi
 	rm -rf dist
+
+run:
+	qemu-system-x86_64 -m 1024 -drive file=dist/iso/Mapple.img,format=raw
+runwsl:
+	qemu-system-x86_64.exe -m 1024 -drive file=dist/iso/Mapple.img,format=raw
