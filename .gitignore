@@ -1,0 +1,5 @@
+.vscode
+*.img
+*.o
+*.so
+*.iso
