@@ -1,6 +1,5 @@
 .vscode
 *.img
-*.o
 *.so
 *.iso
 *.efi
