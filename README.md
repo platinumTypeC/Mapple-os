@@ -3,6 +3,20 @@ An OS using the `UEFI` bootloading system as well as many other mordern feature 
 with as little bloat as possible while supporting features that allow any `Portable Executable`(mordern
 Microsoft .exe format) and `ELF` format files to run natively on it.
 
+## Build
+Requirements:
+  * [ ] WSL or LINUX device with GNU make installed
+  * [ ] QEMU installed( you need to add QEMU to path if you are on WSL)
+
+
+First run `make install` to install dependeces of Mapple os, these being:
+  * binutils
+  * gcc
+  * ccd2iso
+
+then run `make` to build and finally `make iso` to make an .img file in dist/iso/Mapple.img. then run it
+by `make run` or `make runwsl` if you are on WSL.
+
 ## TODO
 * [ ] Make an iso file from .elf
 * [ ] Make a Simple UI
