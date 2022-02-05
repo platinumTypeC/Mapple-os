@@ -34,31 +34,26 @@ recomwsl: all iso runwsl
 		--target=efi-app-$(ARCH) $^ $@
 
 install:
-	@sudo apt install -y binutils
-	@sudo apt install -y gcc
-	@sudo apt install -y ccd2iso
+	sudo apt install -y binutils
+	sudo apt install -y gcc
+	sudo apt install -y iat
 
-setup:
-	@mkdir -p dist
-	@mkdir -p dist/iso
-
-iso: setup
-	cp src/main.efi dist/iso/
-	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
-	mformat -i dist/iso/Mapple.img ::
-	mcopy -i dist/iso/Mapple.img dist/iso/main.efi ::
-	mcopy -i dist/iso/Mapple.img src/startup.nsh ::
-#	mdir -i dist/iso/Mapple.img ::
-# mdir just shows inside Mapple.img
-
-createImage: dist/iso/Mapple.img
-	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
+iso:
+	@rm -rf dist
+	@mkdir -p dist/iso/EFI/Boot/
+	cp src/*.nsh dist/iso/
+	cp src/*.efi dist/iso/EFI/Boot/
+	dd if=/dev/zero of=dist/Mapple.img bs=1M count=100
+	mformat -i dist/Mapple.img ::
+	mcopy -si dist/Mapple.img dist/iso/* ::
+#	mdir -i dist/Mapple.img ::
+#   mdir just shows inside Mapple.img
 
 clean:
-	rm -rf src/*.efi
-	rm -rf dist
+	@rm -rf src/*.efi
+	@rm -rf dist
 
 run:
-	qemu-system-x86_64 -drive file=dist/iso/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
+	@qemu-system-x86_64 -drive file=dist/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
 runwsl:
-	qemu-system-x86_64.exe -drive file=dist/iso/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
+	@qemu-system-x86_64.exe -drive file=dist/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
