@@ -1,9 +1,7 @@
 #include "kernel.h"
 
-static inline void PlotPixel_32bpp(int x, int y, uint32_t pixel)
-{
-   *((uint32_t*)(gop->Mode->FrameBufferBase + 4 * gop->Mode->Info->PixelsPerScanLine * y + 4 * x)) = pixel;
-}
+EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+
 
 EFI_STATUS
 EFIAPI
@@ -11,10 +9,8 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     InitializeLib(ImageHandle, SystemTable);
     EFI_STATUS status;
-    // EFI_INPUT_KEY Key;
 
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     
     status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopGuid, NULL, (void**)&gop);
     if(EFI_ERROR(status))
@@ -61,7 +57,6 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         gop->Mode->Info->PixelsPerScanLine
         );
     }
-    UINT32 pitch = 4 * gop->Mode->Info->PixelsPerScanLine;
     kmain();
     return status;
 }
