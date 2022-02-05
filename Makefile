@@ -15,9 +15,12 @@ ifeq ($(ARCH),x86_64)
 endif
 
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
-		  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
+				  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
 
 all: $(TARGET)
+
+recom: all iso run
+recomwsl: all iso runwsl
 
 %.o: %.c
 	gcc $(CFLAGS) -c $^ -o $@
@@ -34,7 +37,6 @@ install:
 	@sudo apt install -y binutils
 	@sudo apt install -y gcc
 	@sudo apt install -y ccd2iso
-	@sudo apt install -y genisoimage
 
 setup:
 	@mkdir -p dist
@@ -45,10 +47,9 @@ iso: setup
 	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
 	mformat -i dist/iso/Mapple.img ::
 	mcopy -i dist/iso/Mapple.img dist/iso/main.efi ::
-#   mdir just prints its contents if you would like to have a look:
-#
-#   mdir -i dist/iso/Mapple.img ::
-#
+	mcopy -i dist/iso/Mapple.img src/startup.nsh ::
+#	mdir -i dist/iso/Mapple.img ::
+# mdir just shows inside Mapple.img
 
 createImage: dist/iso/Mapple.img
 	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
@@ -58,6 +59,6 @@ clean:
 	rm -rf dist
 
 run:
-	qemu-system-x86_64 -m 1024 -drive file=dist/iso/Mapple.img,format=raw
+	qemu-system-x86_64 -drive file=dist/iso/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
 runwsl:
-	qemu-system-x86_64.exe -m 1024 -drive file=dist/iso/Mapple.img,format=raw
+	qemu-system-x86_64.exe -drive file=dist/iso/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
