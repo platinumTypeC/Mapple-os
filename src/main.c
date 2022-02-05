@@ -1,7 +1,9 @@
-#include "include/efi.h"
-#include "include/efilib.h"
-
 #include "kernel.h"
+
+static inline void PlotPixel_32bpp(int x, int y, uint32_t pixel)
+{
+   *((uint32_t*)(gop->Mode->FrameBufferBase + 4 * gop->Mode->Info->PixelsPerScanLine * y + 4 * x)) = pixel;
+}
 
 EFI_STATUS
 EFIAPI
@@ -31,6 +33,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         numModes = gop->Mode->MaxMode;
     }
 
+    UINT32 mode;
     for (int i = 0; i < numModes; i++) {
         status = uefi_call_wrapper(gop->QueryMode, 4, gop, i, &SizeOfInfo, &info);
         Print(L"mode %03d width %d height %d format %x%s\n",
@@ -40,6 +43,25 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
             info->PixelFormat,
             i == nativeMode ? "(current)" : ""
         );
+        if (i == 0){
+            mode = i;
+            break;
+        }
     }
+    status = uefi_call_wrapper(gop->SetMode, 2, gop, mode);
+    if(EFI_ERROR(status)) {
+        Print(L"Unable to set mode %03d", mode);
+    } else {
+        // get framebuffer
+        Print(L"Framebuffer address %x size %d, width %d height %d pixelsperline %d",
+        gop->Mode->FrameBufferBase,
+        gop->Mode->FrameBufferSize,
+        gop->Mode->Info->HorizontalResolution,
+        gop->Mode->Info->VerticalResolution,
+        gop->Mode->Info->PixelsPerScanLine
+        );
+    }
+    UINT32 pitch = 4 * gop->Mode->Info->PixelsPerScanLine;
+    kmain();
     return status;
 }
