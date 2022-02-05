@@ -25,7 +25,7 @@ recomwsl: all iso runwsl
 %.o: %.c
 	gcc $(CFLAGS) -c $^ -o $@
 
-%.so: %.o
+%.so: %.o $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
 
 %.efi: %.so
@@ -50,7 +50,7 @@ iso:
 #   mdir just shows inside Mapple.img
 
 clean:
-	@rm -rf src/*.efi
+	@rm -rf src/*.o src/*.efi src/*.so
 	@rm -rf dist
 
 run:
