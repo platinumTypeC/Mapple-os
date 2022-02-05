@@ -1,5 +1,5 @@
 #pragma once
-
-#define MAPPLEKERNEL __dll_
+#include "include/efi.h"
+#include "include/efilib.h"
 
 int kmain();
