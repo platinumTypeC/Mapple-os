@@ -55,7 +55,7 @@ createImage: dist/iso/Mapple.img
 	dd if=/dev/zero of=dist/iso/Mapple.img bs=1M count=50
 
 clean:
-	rm -rf *.img *.o *.so *.iso *.efi
+	rm -rf src/*.efi
 	rm -rf dist
 
 run:
