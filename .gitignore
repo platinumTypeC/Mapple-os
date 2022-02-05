@@ -3,3 +3,4 @@
 *.so
 *.iso
 *.efi
+src/*.efi
