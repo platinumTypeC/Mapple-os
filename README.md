@@ -14,8 +14,8 @@ First run `make install` to install dependeces of Mapple os, these being:
   * gcc
   * ccd2iso
 
-then run `make` to build and finally `make iso` to make an .img file in dist/iso/Mapple.img. then run it
-by `make run` or `make runwsl` if you are on WSL.
+then run `make recom` to build and to make an .img file in dist/iso/Mapple.img. This will also run the img
+file, if you are on wsl then use `make recomwsl`.
 
 ## TODO
 * [ ] Make an iso file from .elf
