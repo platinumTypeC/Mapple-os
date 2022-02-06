@@ -1,4 +1,4 @@
 @echo -off
 cls
 fs0:
-.\EFI\Boot\main.efi
+.\EFI\Boot\boot.efi
