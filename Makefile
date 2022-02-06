@@ -12,16 +12,10 @@ EFILIB          = ./lib
 EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
 
-INPROGRESS      = no
-
-CFLAGS          = -Isrc/include -fno-stack-protector -fpic \
+CFLAGS          = -Isrc/include -Isrc/bootloader -fno-stack-protector -fpic \
 		  		  -fshort-wchar -mno-red-zone -Wall
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
-endif
-
-ifeq ($(INPROGRESS),yes)
-  CFLAGS += -DINPROGRESS
 endif
 
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
@@ -42,8 +36,6 @@ src/boot.efi: src/boot.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
-	rm -rf src/bootloader/*.o
-	rm -rf src/boot.so
 
 src/kernel.so: ${KERNEL_OBJS}
 	ld $(LDFLAGS) $(KERNEL_OBJS) -o $@ -lefi -lgnuefi
@@ -52,8 +44,6 @@ src/kernel.efi: src/kernel.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
-	rm -rf src/kernel/*.o
-	rm -rf src/kernel.so
 
 install:
 	sudo apt install -y gcc
@@ -73,8 +63,8 @@ iso:
 #   mdir just shows inside Mapple.img
 
 clean:
-	@rm -rf src/*.o src/*.efi src/*.so
 	@rm -rf dist
+	@rm -rf $(shell find src -name '*.o') $(shell find src -name '*.so') $(shell find src -name '*.efi')
 
 run:
 	qemu-system-x86_64 -drive file=dist/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
