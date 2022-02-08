@@ -1,18 +1,13 @@
 ARCH                := $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-BOOT_SRCFILES       := $(shell find src/bootloader -name '*.c')
-BOOT_OBJS            = $(BOOT_SRCFILES:.c=.o)
-BOOT_TARGET          = $(BOOT_SRCFILES:.c=.efi)
-
-KERNEL_SRCFILES     := $(shell find src/kernel -name '*.c')
-KERNEL_OBJS          = $(KERNEL_SRCFILES:.c=.o)
-KERNEL_TARGET        = $(KERNEL_SRCFILES:.c=.efi)
+SRCFILES     := $(shell find src/kernel -name '*.c')
+OBJS          = $(SRCFILES:.c=.o)
 
 EFILIB          = ./lib
 EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
 
-CFLAGS          = -Isrc/include -Isrc/bootloader -fno-stack-protector -fpic \
+CFLAGS          = -Isrc/include -fno-stack-protector -fpic \
 		  		  -fshort-wchar -mno-red-zone -Wall
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
@@ -21,29 +16,22 @@ endif
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 				  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
 
-all: src/boot.efi src/kernel.efi
+compile: src/kernel.efi
 
-recom: all iso run
-recomwsl: all iso runwsl
+linux: compile iso run
+wsl: compile iso runwsl
 
 %.o: %.c
-	gcc $(CFLAGS) -c $^ -o $@
+	gcc ${CFLAGS} -c $^ -o $@
 
-src/boot.so: $(BOOT_OBJS)
-	ld $(LDFLAGS) $(BOOT_OBJS) -o $@ -lefi -lgnuefi
-
-src/boot.efi: src/boot.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic \
-		-j .dynsym  -j .rel -j .rela -j .reloc \
-		--target=efi-app-$(ARCH) $^ $@
-
-src/kernel.so: ${KERNEL_OBJS}
-	ld $(LDFLAGS) $(KERNEL_OBJS) -o $@ -lefi -lgnuefi
+src/kernel.so: ${OBJS}
+	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
 
 src/kernel.efi: src/kernel.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
+	rm src/kernel.so
 
 install:
 	sudo apt install -y gcc
@@ -51,22 +39,16 @@ install:
 	sudo apt install -y iat
 
 iso:
-	@rm -rf dist
-	@mkdir -p dist/iso/EFI/Boot/
-	cp src/boot.efi dist/iso/EFI/Boot/boot.efi
-	cp src/kernel.efi dist/iso/kernel.efi
-	cp src/*.nsh dist/iso/
-	dd if=/dev/zero of=dist/Mapple.img bs=1M count=200
-	mformat -i dist/Mapple.img ::
-	mcopy -si dist/Mapple.img dist/iso/* ::
-#	mdir -i dist/Mapple.img ::
-#   mdir just shows inside Mapple.img
+	dd if=/dev/zero of=Mapple.img bs=1M count=500
+	mformat -i Mapple.img ::
+	mcopy -si Mapple.img data/* ::
+	mcopy -i Mapple.img src/startup.nsh ::
+	mcopy -i Mapple.img src/kernel.efi ::
 
 clean:
-	@rm -rf dist
-	@rm -rf $(shell find src -name '*.o') $(shell find src -name '*.so') $(shell find src -name '*.efi')
+	@rm $(shell find src -name '*.o') src/kernel.so src/kernel.efi
 
 run:
-	qemu-system-x86_64 -drive file=dist/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
+	qemu-system-x86_64 -drive file=Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
 runwsl:
-	qemu-system-x86_64.exe -drive file=dist/Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
+	qemu-system-x86_64.exe -drive file=Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
