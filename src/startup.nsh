@@ -2,9 +2,9 @@
 mode 80 25
 
 cls
-if exist fs0:\kernel.efi then
+if exist fs0:\efi\Boot\boot.efi then
  fs0:
- kernel.efi
+ .\efi\Boot\boot.efi
  goto END
 endif
 
