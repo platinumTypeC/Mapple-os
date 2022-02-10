@@ -2,6 +2,5 @@
 dist/
 *.img
 *.so
-*.iso
-*.efi
+lib/*.o
 src/*.efi

@@ -5,9 +5,9 @@
 
 #include "include/error.h"
 #include "include/serialService.h"
-#include "include/Efifilesystem.h"
 #include "include/utils.h"
 #include "include/graphics.h"
+#include "include/FileSystem.h"
 
 /**
  * @brief entry point of the entire os.
@@ -24,9 +24,6 @@ efi_main(
 ){
     InitializeLib(ImageHandle, SystemTable);
 
-	EFI_FILE_HANDLE Volume = GetVolume(ImageHandle);
-
-    EFI_FILE_HANDLE Kernel = LoadFile(L"kernel.elf", Volume);
 
 	disableWatchDogTimer();
 	ResetConsole(SystemTable);
@@ -41,10 +38,11 @@ efi_main(
 		return EFI_UNSUPPORTED;
 	};
 
-	if (Kernel == NULL){
-		Print(L"Error: Could not load kernel \n\r");
+	if (init_file_system_service() != EFI_SUCCESS){
+		Print(L"Error: Unable to init file system");
 		return EFI_UNSUPPORTED;
 	}
+
 #ifdef MAPPLE_DEBUG
 	else{
 		Print(L"Kernel Loaded Successfully \n\r");
