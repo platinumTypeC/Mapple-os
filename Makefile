@@ -6,12 +6,17 @@ BOOTLOADER_OBJS          = $(BOOTLOADER_SRCFILES:.c=.o)
 KERNEL_SRCFILES         := $(shell find src/kernel -name "*.c")
 KERNEL_OBJS              = $(KERNEL_SRCFILES:.c=.o)
 
-EFILIB          = ./efilib
-EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
-EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
+HEADER_FILES            :=
 
-CFLAGS          = -Isrc/include -fno-stack-protector -fpic \
-		  		  -fshort-wchar -mno-red-zone -Wall -DMAPPLE_DEBUG
+EFILIB          		 = ./efilib
+EFI_CRT_OBJS    		 = $(EFILIB)/crt0-efi-$(ARCH).o
+EFI_LDS         		 = $(EFILIB)/elf_$(ARCH)_efi.lds
+
+CFLAGS          		 = -Isrc/include -fno-stack-protector -fpic \
+		  		  		   -fshort-wchar -mno-red-zone -Wall
+
+include Makefile.rule
+
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
@@ -22,15 +27,14 @@ LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 compile: src/boot.efi src/kernel.efi
 	rm src/boot.so
 	rm src/kernel.so
-	mv $(shell find src -name '*.o') ./lib
 
 linux: compile iso run
 wsl: compile iso runwsl
 
-%.o: %.c 
+%.o: %.c $(shell find src -name "*.h")
 	gcc ${CFLAGS} -c $< -o $@
 
-src/boot.so: ${BOOTLOADER_OBJS} $(shell find src -name "*.h")
+src/boot.so: ${BOOTLOADER_OBJS}
 	ld $(LDFLAGS) $(BOOTLOADER_OBJS) -o $@ -lefi -lgnuefi
 
 src/boot.efi: src/boot.so
@@ -38,7 +42,7 @@ src/boot.efi: src/boot.so
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
 
-src/kernel.so: ${KERNEL_OBJS} $(shell find src -name "*.h")
+src/kernel.so: ${KERNEL_OBJS}
 	ld -nostdlib -znocombreloc -shared -Bsymbolic $(KERNEL_OBJS) -o $@
 
 src/kernel.efi: src/kernel.so
@@ -52,7 +56,7 @@ install:
 	sudo apt install -y iat
 
 iso:
-	@rm -r dist
+	@rm -rf dist
 	@mkdir -p dist/EFI/Boot/
 	cp src/boot.efi dist/EFI/Boot/
 	cp src/kernel.efi dist/
@@ -60,8 +64,9 @@ iso:
 	dd if=/dev/zero of=Mapple.img bs=1M count=500
 	mformat -i Mapple.img ::
 	mcopy -si Mapple.img dist/* ::
+	@rm -rf dist
 clean:
-	@rm $(shell find src -name '*.o') src/kernel.so src/kernel.efi
+	@rm -rf $(shell find src -name "*.o") $(shell find src -name "*.so") $(shell find src -name "*.efi")
 
 run:
 	qemu-system-x86_64 -drive file=Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
