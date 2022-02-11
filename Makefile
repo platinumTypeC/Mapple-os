@@ -15,8 +15,6 @@ EFI_LDS         		 = $(EFILIB)/elf_$(ARCH)_efi.lds
 CFLAGS          		 = -Isrc/include -fno-stack-protector -fpic \
 		  		  		   -fshort-wchar -mno-red-zone -Wall
 
-include Makefile.rule
-
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
@@ -43,7 +41,7 @@ src/boot.efi: src/boot.so
 		--target=efi-app-$(ARCH) $^ $@
 
 src/kernel.so: ${KERNEL_OBJS}
-	ld -nostdlib -znocombreloc -shared -Bsymbolic $(KERNEL_OBJS) -o $@
+	ld -nostdlib -znocombreloc -shared -Bsymbolic -T src/kernel/kernel.ld $(KERNEL_OBJS) -o $@
 
 src/kernel.efi: src/kernel.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
@@ -54,6 +52,7 @@ install:
 	sudo apt install -y gcc
 	sudo apt install -y binutils
 	sudo apt install -y iat
+	sudo apt install -y mtools
 
 iso:
 	@rm -rf dist
@@ -61,12 +60,14 @@ iso:
 	cp src/boot.efi dist/EFI/Boot/
 	cp src/kernel.efi dist/
 	cp src/startup.nsh dist/
+	cp -r data dist/
 	dd if=/dev/zero of=Mapple.img bs=1M count=500
 	mformat -i Mapple.img ::
 	mcopy -si Mapple.img dist/* ::
-	@rm -rf dist
+
 clean:
 	@rm -rf $(shell find src -name "*.o") $(shell find src -name "*.so") $(shell find src -name "*.efi")
+	@rm -rf dist/
 
 run:
 	qemu-system-x86_64 -drive file=Mapple.img,format=raw -m 100M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
