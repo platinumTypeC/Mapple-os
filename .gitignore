@@ -1,6 +1,7 @@
 .vscode
 dist/
+lib/
 *.img
-*.so
-lib/*.o
+src/bootloader/*.o
+src/kernel/*.o
 src/*.efi
