@@ -7,7 +7,7 @@ EFI_STATUS configure_serial_protocol(IN EFI_SERIAL_IO_PROTOCOL* const protocol)
 	/** The program status. */
 	EFI_STATUS status;
 
-	#ifdef MAPPLE_DEBUG
+	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Configuring serial IO protocol\n");
 	#endif
 
@@ -28,7 +28,7 @@ EFI_STATUS init_serial_service(void)
 	/** The program status. */
 	EFI_STATUS status;
 
-	#ifdef MAPPLE_DEBUG
+	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Initialising Serial service\n");
 	#endif
 
@@ -42,7 +42,7 @@ EFI_STATUS init_serial_service(void)
 		return status;
 	}
 
-	#ifdef MAPPLE_DEBUG
+	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Located Serial Protocol\n");
 	#endif
 

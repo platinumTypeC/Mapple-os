@@ -8,6 +8,8 @@
 #include "include/utils.h"
 #include "include/graphics.h"
 #include "include/FileSystem.h"
+#include "include/loader.h"
+#include "include/config.h"
 
 /**
  * @brief entry point of the entire os.
@@ -19,37 +21,29 @@
 EFI_STATUS
 EFIAPI
 efi_main(
-    EFI_HANDLE ImageHandle,
-    EFI_SYSTEM_TABLE *SystemTable
+    IN EFI_HANDLE ImageHandle,
+    IN EFI_SYSTEM_TABLE *SystemTable
 ){
     InitializeLib(ImageHandle, SystemTable);
-
 
 	disableWatchDogTimer();
 	ResetConsole(SystemTable);
 	
-	if (init_serial_service() != EFI_SUCCESS){
-		Print(L"Error: Unable to init serial service \n\r");
-		return EFI_UNSUPPORTED;
-	};
+	CHECKER(init_serial_service(), L"Error: Unable to init serial service, Error: %s\n\r");
 
-	if (init_graphics_output_service(ImageHandle) != EFI_SUCCESS){
-		Print(L"Error: Unable to init Graphics output protocol\n\r");
-		return EFI_UNSUPPORTED;
-	};
+	CHECKER(init_graphics_output_service(ImageHandle), L"Error: Unable to init Graphics output protocol\n\r");
 
 	if (init_file_system_service() != EFI_SUCCESS){
-		Print(L"Error: Unable to init file system");
+		Print(L"Error: Unable to init file system\n\r");
 		return EFI_UNSUPPORTED;
 	}
 
-#ifdef MAPPLE_DEBUG
-	else{
-		Print(L"Kernel Loaded Successfully \n\r");
+	if (load_kernel(get_system_root(), KERNEL_EXECUTABLE_PATH) != EFI_SUCCESS){
+		return EFI_UNSUPPORTED;
 	};
-#endif
-#ifdef MAPPLE_DEBUG
-	Print(L"Debug: Done\n");
+
+#if MAPPLE_DEBUG != 0 
+	Print(L"Error: This should never be reached\n\r");
 #endif
 
     return EFI_SUCCESS;

@@ -3,9 +3,17 @@
 EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* FileSystem;
 EFI_FILE* root_file_system;
 
+EFI_FILE* get_system_root(){
+	return root_file_system;
+}
+
+EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* get_file_system_protocol(){
+	return FileSystem;
+}
+
 EFI_STATUS init_file_system_service(void)
 {
-	#ifdef MAPPLE_DEBUG
+	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Initialising File System service\n");
 	#endif
 
@@ -18,7 +26,7 @@ EFI_STATUS init_file_system_service(void)
 		return status;
 	}
 
-	#ifdef MAPPLE_DEBUG
+	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Located Simple File System Protocol\n");
 	#endif
 
@@ -31,7 +39,7 @@ EFI_STATUS init_file_system_service(void)
 		return status;
 	}
 	
-    #ifdef MAPPLE_DEBUG
+    #if MAPPLE_DEBUG != 0
 		Print(L"Debug: File System Initialized \n");
 	#endif
 

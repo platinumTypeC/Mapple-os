@@ -72,7 +72,7 @@ EFI_STATUS find_video_mode(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 
 	UINTN i = 0;
 	for(i = 0; i < protocol->Mode->MaxMode; i++) {
-		#ifdef DEBUG
+		#if MAPPLE_DEBUG != 0
 			Print(L"Debug: Testing video mode: '%llu'\n", i);
 		#endif
 
@@ -89,7 +89,7 @@ EFI_STATUS find_video_mode(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 			mode_info->VerticalResolution == target_height &&
 			mode_info->PixelFormat == target_pixel_format) {
 
-			#ifdef DEBUG
+			#if MAPPLE_DEBUG != 0
 				Print(L"Debug: Matched video mode: '%llu' for '%lu*%lu*%u'\n", i,
 					target_width, target_height, target_pixel_format);
 			#endif
@@ -183,7 +183,7 @@ EFI_STATUS init_graphics_output_service(EFI_HANDLE ImageHandle)
         Print(L"Error: Unable to locate GOP\n\r");
         return status;
     }
-#ifdef MAPPLE_DEBUG
+#if MAPPLE_DEBUG != 0
     Print(L"Debug: Located the graphics output protocol");
 #endif
 
