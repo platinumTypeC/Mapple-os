@@ -1,14 +1,7 @@
 #include "include/loader.h"
 
 /**
- * @brief 
- * 
- * @param kernel_img_file 
- * @param segment_file_offset 
- * @param segment_file_size 
- * @param segment_memory_size 
- * @param segment_virtual_address 
- * @return EFI_STATUS 
+ * load_segment
  */
 EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 	IN EFI_PHYSICAL_ADDRESS const segment_file_offset,
@@ -142,13 +135,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 }
 
 /**
- * @brief 
- * 
- * @param kernel_img_file 
- * @param file_class 
- * @param kernel_header_buffer 
- * @param kernel_program_headers_buffer 
- * @return EFI_STATUS 
+ * load_program_segments
  */
 EFI_STATUS load_program_segments(IN EFI_FILE* const kernel_img_file,
 	IN Elf_File_Class const file_class,
@@ -235,157 +222,102 @@ EFI_STATUS load_program_segments(IN EFI_FILE* const kernel_img_file,
 	return EFI_SUCCESS;
 }
 
-/**
- * @brief 
- * 
- * @param root_file_system 
- * @param kernel_image_filename 
- * @param kernel_entry_point 
- * @return EFI_STATUS 
- */
-EFI_STATUS load_kernel_image(
-	IN EFI_FILE* const root_file_system,
-	IN CHAR16* const kernel_image_filename,
-	OUT EFI_PHYSICAL_ADDRESS* kernel_entry_point
-){
-	/** Program status. */
-	EFI_STATUS status;
-	/** The kernel file handle. */
-	EFI_FILE* kernel_img_file;
-	/** The kernel ELF header buffer. */
-	VOID* kernel_header = NULL;
-	/** The kernel program headers buffer. */
-	VOID* kernel_program_headers = NULL;
-	/** The ELF file identity buffer. */
-	UINT8* elf_identity_buffer = NULL;
-	/** The ELF file class. */
-	Elf_File_Class file_class = ELF_FILE_CLASS_NONE;
-
-	#if MAPPLE_DEBUG != 0
-		Print(L"Debug: Reading kernel image file\n");
-	#endif
-
-	status = uefi_call_wrapper(root_file_system->Open, 5,
-		root_file_system, &kernel_img_file, kernel_image_filename,
-		EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error opening kernel file: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
-
-
-	// Read ELF Identity.
-	// From here we can validate the ELF executable, as well as determine the
-	// file class.
-	Print(L"Crash Report one\n\r");
-	status = read_elf_identity(kernel_img_file, &elf_identity_buffer);
-	if(EFI_ERROR(status)) {
-		Print(L"Fatal Error: Error reading executable identity\n");
-		return status;
-	}
-
-	file_class = elf_identity_buffer[EI_CLASS];
-
-	// Validate the ELF file.
-	status = validate_elf_identity(elf_identity_buffer);
-	if(EFI_ERROR(status)) {
-		// Error message printed in validation function.
-		return status;
-	}
-
-	#if MAPPLE_DEBUG != 0
-		Print(L"Debug: ELF header is valid\n");
-	#endif
-
-	// Free identity buffer.
-	status = uefi_call_wrapper(gBS->FreePool, 1, elf_identity_buffer);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error freeing kernel identity buffer: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
-
-
-	// Read the ELF file and program headers.
-	status = read_elf_file(kernel_img_file, file_class,
-		&kernel_header, &kernel_program_headers);
-	if(EFI_ERROR(status)) {
-		Print(L"Fatal Error: Error reading ELF file\n");
-		return status;
-	}
-
-	#if MAPPLE_DEBUG != 0
-		print_elf_file_info(kernel_header, kernel_program_headers);
-	#endif
-
-	// Set the kernel entry point to the address specified in the ELF header.
-	if(file_class == ELF_FILE_CLASS_32) {
-		*kernel_entry_point = ((Elf32_Ehdr*)kernel_header)->e_entry;
-	} else if(file_class == ELF_FILE_CLASS_64) {
-		*kernel_entry_point = ((Elf64_Ehdr*)kernel_header)->e_entry;
-	}
-
-	status = load_program_segments(kernel_img_file, file_class,
-		kernel_header, kernel_program_headers);
-	if(EFI_ERROR(status)) {
-		Print(L"Fatal Error: Error loading program sections\n");
-		return status;
-	}
-
-	// Cleanup.
-	#if MAPPLE_DEBUG != 0
-		Print(L"Debug: Closing kernel binary\n");
-	#endif
-
-	status = uefi_call_wrapper(kernel_img_file->Close, 1, kernel_img_file);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error closing kernel img: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
-
-	#if MAPPLE_DEBUG != 0
-		Print(L"Debug: Freeing kernel header buffer\n");
-	#endif
-
-	status = uefi_call_wrapper(gBS->FreePool, 1, (VOID*)kernel_header);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error freeing kernel header buffer: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
-
-	#if MAPPLE_DEBUG != 0
-		Print(L"Debug: Freeing kernel program header buffer\n");
-	#endif
-
-	status = uefi_call_wrapper(gBS->FreePool, 1, (VOID*)kernel_program_headers);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error freeing kernel "
-			"program headers buffer: %s\n", get_efi_error_message(status));
-
-		return status;
-	}
-
-
-	return status;
-}
 
 EFI_STATUS load_kernel(
-	IN EFI_FILE* const root_file_system,
-	IN CHAR16* const kernel_image_filename
+	OUT EFI_PHYSICAL_ADDRESS* KernelEntryPoint
 ){
 #if MAPPLE_DEBUG != 0
 	Print(L"Debug: Starting to load kernel");
 #endif
-    EFI_PHYSICAL_ADDRESS* kernel_entry_point = NULL;
-	CHECKER(load_kernel_image(root_file_system, KERNEL_EXECUTABLE_PATH, kernel_entry_point),
-		L"Fatal Error: unable to load the kernel, with error: %s\n\r"
+	EFI_FILE* kernelImageFile;
+	UINT8* KernelELFIdentityBuffer = NULL;
+	Elf_File_Class FileClass = ELF_FILE_CLASS_NONE;
+	VOID* KernelHeader = NULL;
+	VOID* KernelProgramHeaders = NULL;
+
+	CHECKER(
+		uefi_call_wrapper(get_system_root()->Open, 5,
+			get_system_root(), &kernelImageFile, KERNEL_EXECUTABLE_PATH,
+			EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY
+		)
+	,
+		L"Error: Unable to get kernel Image, error: %s\n\r"
 	);
+
+
+	CHECKER(
+		read_elf_identity(kernelImageFile, &KernelELFIdentityBuffer),
+		L"Error: Unable to read headers of kernel.elf, error: %s\n\r"
+	);
+
+	FileClass = KernelELFIdentityBuffer[EI_CLASS];
+
+	CHECKER(
+		validate_elf_identity(KernelELFIdentityBuffer),
+		L"Error: Unable to validate the kernel, error: %s\n\r"
+	);
+
+	/**
+	 * Everything after this point is causing some strange behaviour.
+	 */
+#if MAPPLE_DEBUG != 0
+	Print(L"Debug: kernel file is valid");
+#endif
+
+	CHECKER(
+		uefi_call_wrapper(gBS->FreePool, 1, KernelELFIdentityBuffer),
+		L"Error: while Freeing the Identity Buffer, error: %s\n\r"
+	);
+
+	CHECKER(
+		read_elf_file(kernelImageFile, FileClass, &KernelHeader, &KernelProgramHeaders),
+		L"Error: Unable to read elf file, error: %s\n\r"
+	);
+
+#if MAPPLE_DEBUG != 0
+	print_elf_file_info(KernelHeader, KernelProgramHeaders);
+#endif
+
+	if(FileClass == ELF_FILE_CLASS_32) {
+		*KernelEntryPoint = ((Elf32_Ehdr*)KernelHeader)->e_entry;
+	} else if(FileClass == ELF_FILE_CLASS_64) {
+		*KernelEntryPoint = ((Elf64_Ehdr*)KernelHeader)->e_entry;
+	}
+
+	CHECKER(
+		load_program_segments(kernelImageFile, FileClass,
+			KernelHeader, KernelProgramHeaders),
+		
+		L"Error: Unable to load program sections, error: %s\n\r"
+	);
+#if MAPPLE_DEBUG != 0
+	Print(L"Debug: Closing kernel binary\n");
+#endif
+
+	CHECKER(
+		uefi_call_wrapper(kernelImageFile->Close, 1, kernelImageFile),
+
+		L"Error: Unable to close kernel img file, error: %s\n\r"
+	);
+
+#if MAPPLE_DEBUG != 0
+	Print(L"Debug: Freeing kernel header buffer\n");
+#endif
+
+	CHECKER(
+		uefi_call_wrapper(gBS->FreePool, 1, (VOID*)KernelHeader),
+		L"Error: Unable to Free Pool of kernel header, error: %s\n\r"
+	);
+
+#if MAPPLE_DEBUG != 0
+	Print(L"Debug: Freeing kernel program header buffer\n");
+#endif
+
+	CHECKER(
+		uefi_call_wrapper(gBS->FreePool, 1, (VOID*)KernelProgramHeaders),
+
+		L"Error: Unable to FreePool kernel Progarm Headers, error: %s\n\r"
+	);
+	
 	return EFI_SUCCESS;
 };
