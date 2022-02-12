@@ -20,4 +20,7 @@ VOID draw_rect(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 	IN const UINT16 height,
 	IN const UINT32 color
 );
+
+EFI_STATUS close_graphics();
+
 EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop_protocol();

@@ -202,3 +202,17 @@ EFI_STATUS init_graphics_output_service(EFI_HANDLE ImageHandle)
     
 	return EFI_SUCCESS;
 }
+
+EFI_STATUS close_graphics(){
+
+	Print(L"Debug: CLosing the graphics service\n\r");
+	CHECKER(
+		uefi_call_wrapper(gBS->FreePool, 1,
+			graphics_output_protocol
+		),
+		
+		L"Error: Error releasing GOP handle buffer: %s\n"
+	);
+
+	return EFI_SUCCESS;
+};
