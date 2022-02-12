@@ -22,9 +22,12 @@ endif
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 				  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
 
-compile: src/boot.efi src/kernel.efi
+KERNEL_LDFLAGS  = -ffreestanding -O2 -nostdlib -z max-page-size=0x1000
+
+KERNEL_LIBS    := -lgcc
+
+compile: src/boot.efi src/kernel.elf
 	rm src/boot.so
-	rm src/kernel.so
 
 linux: compile iso run
 wsl: compile iso runwsl
@@ -40,13 +43,8 @@ src/boot.efi: src/boot.so
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
 
-src/kernel.so: ${KERNEL_OBJS}
-	ld -nostdlib -znocombreloc -shared -Bsymbolic -T src/kernel/kernel.ld $(KERNEL_OBJS) -o $@
-
-src/kernel.efi: src/kernel.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic \
-		-j .dynsym  -j .rel -j .rela -j .reloc \
-		--target=efi-app-$(ARCH) $^ $@
+src/kernel.elf: ${KERNEL_OBJS}
+	gcc -T src/kernel/kernel.ld -g3 -o $@ ${KERNEL_LDFLAGS} ${KERNEL_OBJS} ${KERNEL_LIBS}
 
 install:
 	sudo apt install -y gcc
@@ -58,10 +56,10 @@ iso:
 	@rm -rf dist
 	@mkdir -p dist/EFI/Boot/
 	cp src/boot.efi dist/EFI/Boot/
-	cp src/kernel.efi dist/
+	cp src/kernel.elf dist/
 	cp src/startup.nsh dist/
 	cp -r data dist/
-	dd if=/dev/zero of=Mapple.img bs=1M count=500
+	dd if=/dev/zero of=Mapple.img bs=1M count=100
 	mformat -i Mapple.img ::
 	mcopy -si Mapple.img dist/* ::
 
