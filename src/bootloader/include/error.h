@@ -17,4 +17,4 @@ EFI_STATUS say_efi_status(
 	IN CHAR16* string_to_handle
 );
 
-#define CHECKER(...) { if (say_efi_status(__VA_ARGS__) != EFI_SUCCESS){ return EFI_UNSUPPORTED; }}
+#define CHECKER(expression, handleString) { EFI_STATUS result = expression;if (result != EFI_SUCCESS){ Print(handleString, get_efi_error_message(result) );return result; }}
