@@ -18,8 +18,8 @@
  * @brief Target screen parameters
  * 
  */
-#define TARGET_SCREEN_WIDTH 1024
-#define TARGET_SCREEN_HEIGHT 768
+#define TARGET_SCREEN_WIDTH 2048
+#define TARGET_SCREEN_HEIGHT 1536
 #define TARGET_PIXEL_FORMAT PixelBlueGreenRedReserved8BitPerColor
 
 /**
@@ -33,7 +33,7 @@
 #define TEST_SCREEN_PRIMARY_COLOUR      0x00FF4000
 #define TEST_SCREEN_SECONDARY_COLOUR    0x00FF80BF
 
-#define KERNEL_EXECUTABLE_PATH L"\\kernel.efi"
+#define KERNEL_EXECUTABLE_PATH L"\\kernel.elf"
 
 /**
  * @brief The Debug Switch
