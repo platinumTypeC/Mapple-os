@@ -18,8 +18,8 @@ then run `make recom` to build and to make an .img file in dist/iso/Mapple.img. 
 file, if you are on wsl then use `make recomwsl`.
 
 ## TODO
-* [ ] Make an iso file from .elf
+* [ ] Make an iso file from .img
 * [ ] Make a Simple UI
   * [ ] Make a simple desktop for debuging
   * [ ] Make a Simple Base UI driver
-  * [ ] Port it to be compatable with linux.elf and  windows.dll which will be called if any elf programs or .exe files are run respectively
+  * [ ] Port it to be compatable with .so and .dll which will be called if any elf programs or .exe files are run respectively
