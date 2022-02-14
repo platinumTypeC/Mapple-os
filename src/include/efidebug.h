@@ -21,7 +21,7 @@ Revision History
 
 extern UINTN     EFIDebug;
 
-#if EFI_DEBUG
+#if EFI_DEBUG != 0
 
     #define DBGASSERT(a)        DbgAssert(__FILE__, __LINE__, #a)
     #define DEBUG(a)            DbgPrint a
@@ -74,7 +74,7 @@ extern UINTN     EFIDebug;
 //
 //
 
-#if EFI_DEBUG
+#if EFI_DEBUG != 0
 
     #define ASSERT(a)               if(!(a))       DBGASSERT(a)
     #define ASSERT_LOCKED(l)        if(!(l)->Lock) DBGASSERT(l not locked)

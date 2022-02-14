@@ -69,7 +69,7 @@ typedef struct _LIST_ENTRY {
         _Flink->Blink = _Blink;         \
         }
 
-#if EFI_DEBUG
+#if EFI_DEBUG != 0
     #define RemoveEntryList(Entry)                      \
         _RemoveEntryList(Entry);                        \
         (Entry)->Flink = (LIST_ENTRY *) BAD_POINTER;    \
@@ -152,7 +152,7 @@ typedef struct _LIST_ENTRY {
 #define _CR(Record, TYPE, Field)  \
     ((TYPE *) ( (CHAR8 *)(Record) - (CHAR8 *) &(((TYPE *) 0)->Field)))
 
-#if EFI_DEBUG
+#if EFI_DEBUG != 0
     #define CR(Record, TYPE, Field, Sig)     \
         _CR(Record, TYPE, Field)->Signature != Sig ?        \
             (TYPE *) ASSERT_STRUCT(_CR(Record, TYPE, Field), Record) : \
