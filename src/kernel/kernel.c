@@ -12,11 +12,12 @@ typedef struct s_memory_region_desc {
 
 typedef struct s_boot_info {
 	Memory_Map_Descriptor* memory_map;
+	uint64_t FrameBufferAddr;
 	uint64_t mmap_size;
 	uint64_t mmap_descriptor_size;
 } Boot_Info;
 
 void kernel_main(Boot_Info* boot_info)
 {
-	while(1);
+	while (1);
 }
