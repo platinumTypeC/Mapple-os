@@ -22,5 +22,5 @@ VOID draw_rect(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 );
 
 EFI_STATUS close_graphics();
-
+UINT64 get_farmeBuffer();
 EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop_protocol();
