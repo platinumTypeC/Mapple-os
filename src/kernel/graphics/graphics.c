@@ -1,4 +1,5 @@
 #include <mapple/graphics.h>
+#include <mapple/config.h>
 
 void draw_rect(
     uint16_t _x,
@@ -28,13 +29,13 @@ void draw_test_scene(
 	uint64_t VerticalResolution
 )
 {
-	const uint16_t tile_width = HorizontalResolution / 4;
-	const uint16_t tile_height = VerticalResolution / 3;
+	const uint16_t tile_width = HorizontalResolution / TEST_SCREEN_COL_NUM;
+	const uint16_t tile_height = VerticalResolution / TEST_SCREEN_ROW_NUM;
 
 	uint8_t p = 0;
-	for(p = 0; p < 12; p++) {
-		uint8_t _x = p % 4;
-		uint8_t _y = p / 4;
+	for(p = 0; p < TEST_SCREEN_TOTAL_TILES; p++) {
+		uint8_t _x = p % TEST_SCREEN_COL_NUM;
+		uint8_t _y = p / TEST_SCREEN_COL_NUM;
 
 		uint32_t color = 0x00202363;
 		if(((_y % 2) + _x) % 2) {
