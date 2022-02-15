@@ -57,9 +57,12 @@ get_memory_map(
 
 typedef struct s_boot_info {
 	EFI_MEMORY_DESCRIPTOR* memory_map;
-	UINT64 FrameBufferBaseAddress;
 	UINTN memory_map_size;
 	UINTN memory_map_descriptor_size;
+	UINTN FrameBufferBaseAddress;
+	UINTN HorizontalResolution;
+	UINTN VerticalResolution;
+	UINTN PixelsPerScanLine;;
 } Kernel_Boot_Info;
 
 /**
@@ -112,16 +115,21 @@ efi_main(
 	kernel_entry = (void (*)(Kernel_Boot_Info*))*KernelEnteryPoint;
 
 
-	boot_info.FrameBufferBaseAddress = get_farmeBuffer();
+	boot_info.memory_map = memory_map;
+	boot_info.memory_map_size = memory_map_size;
+	boot_info.memory_map_descriptor_size = descriptor_size;
+	boot_info.HorizontalResolution = get_gop_protocol()->Mode->Info->HorizontalResolution;
+	boot_info.VerticalResolution = get_gop_protocol()->Mode->Info->VerticalResolution;
+	boot_info.FrameBufferBaseAddress = get_gop_protocol()->Mode->FrameBufferBase;
+	boot_info.PixelsPerScanLine = get_gop_protocol()->Mode->Info->PixelsPerScanLine;
 
 	// There is a status error but it works. so I will Probably re write this later
 	gBS->ExitBootServices(ImageHandle, memory_map_key);
 
-	boot_info.memory_map = memory_map;
-	boot_info.memory_map_size = memory_map_size;
-	boot_info.memory_map_descriptor_size = descriptor_size;
-
+#if MAPPLE_DEBUG != 0
 	Print(L"Debug: Entring kernel\n");
+#endif
+
 	kernel_entry(&boot_info);
 #if MAPPLE_DEBUG != 0 
 	Print(L"Debug: This Here means your kernel is faulty..\n\r");

@@ -11,11 +11,6 @@ EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop_protocol(){
     return graphics_output_protocol;
 }
-
-UINT64 get_farmeBuffer(){
-	return graphics_output_protocol->Mode->FrameBufferBase;
-}
-
 /**
  * @brief 
  * 
