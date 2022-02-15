@@ -3,7 +3,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include "error.h"
-#include "config.h"
+#include <mapple/config.h>
 
 typedef struct s_uefi_graphics_service {
 	EFI_HANDLE* handle_buffer;

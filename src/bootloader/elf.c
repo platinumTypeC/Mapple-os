@@ -12,7 +12,7 @@
 
 #include "include/elf.h"
 #include "include/error.h"
-#include "include/config.h"
+#include <mapple/config.h>
 
 
 /**

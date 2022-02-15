@@ -2,7 +2,7 @@
 
 #include <efi.h>
 #include <efilib.h>
-#include "config.h"
+#include <mapple/config.h>
 
 /**
  * @brief Gets a formatted string explaining an EFI error.

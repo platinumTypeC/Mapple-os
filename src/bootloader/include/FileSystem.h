@@ -6,7 +6,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include "error.h"
-#include "config.h"
+#include <mapple/config.h>
 
 EFI_STATUS init_file_system_service(void);
 EFI_FILE* get_system_root();

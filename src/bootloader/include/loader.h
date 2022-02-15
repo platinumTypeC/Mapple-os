@@ -5,9 +5,9 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efiapi.h>
+#include <mapple/config.h>
 
 #include "error.h"
-#include "config.h"
 #include "FileSystem.h"
 #include "elf.h"
 

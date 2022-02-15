@@ -187,7 +187,7 @@ EFI_STATUS init_graphics_output_service(EFI_HANDLE ImageHandle)
 #endif
 
     if (graphics_output_protocol){
-        status = set_graphics_mode(graphics_output_protocol, TARGET_SCREEN_WIDTH,TARGET_SCREEN_HEIGHT, TARGET_PIXEL_FORMAT);
+        status = set_graphics_mode(graphics_output_protocol, TARGET_SCREEN_WIDTH,TARGET_SCREEN_HEIGHT, PixelBlueGreenRedReserved8BitPerColor);
         if (EFI_ERROR(status)){
                 Print(L"Fatal Error: Error seting graphics mode: %s\n",
                     get_efi_error_message(status)

@@ -9,7 +9,7 @@
 #include "include/graphics.h"
 #include "include/FileSystem.h"
 #include "include/loader.h"
-#include "include/config.h"
+#include <mapple/config.h>
 
 
 EFI_STATUS
