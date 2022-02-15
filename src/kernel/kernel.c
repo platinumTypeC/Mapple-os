@@ -1,23 +1,28 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "bootInfo.h"
+#include "graphics/graphics.h"
 
-typedef struct s_memory_region_desc {
-	uint32_t type;
-	uintptr_t physical_start;
-	uintptr_t virtual_start;
-	uint64_t count;
-	uint64_t attributes;
-} Memory_Map_Descriptor;
-
-typedef struct s_boot_info {
-	Memory_Map_Descriptor* memory_map;
-	uint64_t FrameBufferAddr;
-	uint64_t mmap_size;
-	uint64_t mmap_descriptor_size;
-} Boot_Info;
 
 void kernel_main(Boot_Info* boot_info)
 {
+	const uint16_t tile_width = boot_info->HorizontalResolution / 4;
+	const uint16_t tile_height = boot_info->VerticalResolution / 3;
+
+	uint8_t p = 0;
+	for(p = 0; p < 12; p++) {
+		uint8_t _x = p % 4;
+		uint8_t _y = p / 4;
+
+		uint32_t color = 0x00202363;
+		if(((_y % 2) + _x) % 2) {
+			color = 0x00FFB41F;
+		}
+
+		draw_rect(tile_width * _x, tile_height * _y, tile_width, tile_height, color, boot_info->FrameBufferBaseAddress, boot_info->HorizontalResolution);
+	}
+
+
 	while (1);
 }
