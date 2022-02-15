@@ -1,4 +1,4 @@
-#include "graphics.h"
+#include <mapple/graphics.h>
 
 void draw_rect(
     uint16_t _x,
@@ -19,5 +19,28 @@ void draw_rect(
 
 			*at = color;
 		}
+	}
+}
+
+void draw_test_scene(
+	uint64_t FrameBufferBaseAddress,
+	uint64_t HorizontalResolution,
+	uint64_t VerticalResolution
+)
+{
+	const uint16_t tile_width = HorizontalResolution / 4;
+	const uint16_t tile_height = VerticalResolution / 3;
+
+	uint8_t p = 0;
+	for(p = 0; p < 12; p++) {
+		uint8_t _x = p % 4;
+		uint8_t _y = p / 4;
+
+		uint32_t color = 0x00202363;
+		if(((_y % 2) + _x) % 2) {
+			color = 0x00FFB41F;
+		}
+
+		draw_rect(tile_width * _x, tile_height * _y, tile_width, tile_height, color, FrameBufferBaseAddress, HorizontalResolution);
 	}
 }
