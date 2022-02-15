@@ -1,3 +1,5 @@
+all: compile
+
 compile:
 	@make --no-print-directory -C src/bootloader
 	@make --no-print-directory -C src/kernel
