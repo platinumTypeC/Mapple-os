@@ -15,13 +15,13 @@ endif
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 				  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
 
-CFLAGS          		 = -Iefinclude -fno-stack-protector -fpic \
+CFLAGS          		 = -I../kernel/include -Iefinclude -fno-stack-protector -fpic \
 		  		  		   -fshort-wchar -mno-red-zone -Wall
 
 all: ../boot.efi
 	@echo done compiling bootloader.
 
-%.o: %.c $(shell find . -name "*.h")
+%.o: %.c $(shell find . -name "*.h") $(shell find ../kernel/include -name "*.h")
 	gcc ${CFLAGS} -c $< -o $@
 
 ../boot.so: ${BOOTLOADER_OBJS}
