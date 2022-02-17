@@ -17,4 +17,5 @@ typedef struct s_boot_info {
 	uint64_t HorizontalResolution;
 	uint64_t VerticalResolution;
 	uint64_t PixelsPerScanLine;
+	uint16_t PCIIDEBuffer[256];
 } Boot_Info;

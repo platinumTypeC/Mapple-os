@@ -15,8 +15,8 @@
  * @brief Target screen parameters
  * 
  */
-#define TARGET_SCREEN_WIDTH 1024
-#define TARGET_SCREEN_HEIGHT 768
+#define TARGET_SCREEN_WIDTH 2048
+#define TARGET_SCREEN_HEIGHT 1536
 
 /**
  * @brief Test Screen Specifications you can edit easly to check the graphical
