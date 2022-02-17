@@ -4,6 +4,12 @@ compile:
 	@make --no-print-directory -C src/bootloader
 	@make --no-print-directory -C src/kernel
 
+kernel:
+	@make --no-print-directory -C src/kernel
+
+bootloader:
+	@make --no-print-directory -C src/bootloader
+
 linux: compile iso run
 wsl: compile iso runwsl
 
