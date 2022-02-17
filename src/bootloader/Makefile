@@ -21,7 +21,7 @@ CFLAGS          		 = -I../kernel/include -Iefinclude -fno-stack-protector -fpic 
 all: ../boot.efi
 	@echo done compiling bootloader.
 
-%.o: %.c $(shell find . -name "*.h") $(shell find ../kernel/include -name "*.h")
+%.o: %.c $(shell find . -name "*.h") ../kernel/include/config.h
 	gcc ${CFLAGS} -c $< -o $@
 
 ../boot.so: ${BOOTLOADER_OBJS}
