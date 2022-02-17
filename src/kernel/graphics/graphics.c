@@ -1,5 +1,22 @@
 #include <mapple/graphics.h>
-#include <mapple/config.h>
+
+uint64_t FrameBufferBaseAddress;
+uint64_t HorizontalResolution;
+uint64_t VerticalResolution;
+
+void init_graphics(
+	Boot_Info* boot_info
+){
+	FrameBufferBaseAddress = boot_info->FrameBufferBaseAddress;
+	HorizontalResolution = boot_info->HorizontalResolution;
+	VerticalResolution = boot_info->VerticalResolution;
+	// Best Way to communicate debug info as of right now,
+	// I will need to figure out some graphics later
+	debug_patern(
+		0x00202363,
+		0x00FFB41F
+	);
+};
 
 void draw_rect(
     uint16_t _x,
@@ -23,10 +40,16 @@ void draw_rect(
 	}
 }
 
-void draw_test_scene(
-	uint64_t FrameBufferBaseAddress,
-	uint64_t HorizontalResolution,
-	uint64_t VerticalResolution
+
+/**
+ * @brief 
+ * 
+ * @param firstColor 0x00202363
+ * @param secondColor 0x00FFB41F
+ */
+void debug_patern(
+    uint64_t firstColor,
+    uint64_t secondColor
 )
 {
 	const uint16_t tile_width = HorizontalResolution / TEST_SCREEN_COL_NUM;
@@ -37,11 +60,11 @@ void draw_test_scene(
 		uint8_t _x = p % TEST_SCREEN_COL_NUM;
 		uint8_t _y = p / TEST_SCREEN_COL_NUM;
 
-		uint32_t color = 0x00202363;
+		uint32_t color = firstColor;
 		if(((_y % 2) + _x) % 2) {
-			color = 0x00FFB41F;
+			color = secondColor;
 		}
 
 		draw_rect(tile_width * _x, tile_height * _y, tile_width, tile_height, color, FrameBufferBaseAddress, HorizontalResolution);
 	}
-}
+};
