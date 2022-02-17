@@ -62,7 +62,7 @@ typedef struct s_boot_info {
 	UINTN FrameBufferBaseAddress;
 	UINTN HorizontalResolution;
 	UINTN VerticalResolution;
-	UINTN PixelsPerScanLine;;
+	UINTN PixelsPerScanLine;
 } Kernel_Boot_Info;
 
 /**
