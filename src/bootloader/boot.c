@@ -67,8 +67,6 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 
 	UINTN size = sizeof(PSF1_FONT);
 
-	Print(L"A 000000000\n\r");
-
 	CHECKER(uefi_call_wrapper(fontImageFile->Read, 4, fontImageFile, &size, fontHeader), L"Error: Unable to read font file, error: %s \n\r");
 
 	if (fontHeader->magic[0] != PSF1_MAGIC0 || fontHeader->magic[1] != PSF1_MAGIC1){
@@ -102,7 +100,6 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 			,
 			L"Error: Unable to read glyph from font file, error: %s\n\r"
 		);
-		Print(L"A 000000000\n\r");
 	};
 	
 
