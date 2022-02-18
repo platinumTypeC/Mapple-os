@@ -109,7 +109,7 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 			(void**)&fontPs1)
 		,
 		L"Error: Unable to allocate Font, error: %s\n\r"
-	)
+	);
 
 	fontPs1->psf1_Header = fontHeader;
 	fontPs1->glyphBuffer = glyphBuffer;
@@ -161,11 +161,50 @@ get_memory_map(
 	return EFI_SUCCESS;
 }
 
-UINTN mystrcmp(CHAR8* a, CHAR8* b, UINTN length){
+UINTN m_strcmp(CHAR8* a, CHAR8* b, UINTN length){
 	for (UINTN i = 0; i < length; i++){
 		if (*a != *b) return 0;
 	}
 	return 1;
+}
+void* m_malloc(UINTN poolSize)
+{
+	EFI_STATUS status;
+	void* handle;
+	Print(L"allocating memory pool\n");
+	status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, poolSize, &handle);
+
+	if(status == EFI_OUT_OF_RESOURCES)
+	{
+		Print(L"out of resources for pool\n");
+		return 0;
+	}
+	else if(status == EFI_INVALID_PARAMETER)
+	{
+		Print(L"invalid pool type\n");
+		return 0;
+	}
+	else
+	{
+		Print(L"memory pool successfully allocated\n");
+		return handle;
+	}
+}
+
+void m_free(void * pool)
+{
+    EFI_STATUS status;
+    Print(L"freeing memory pool\n");
+    status = uefi_call_wrapper(BS->FreePool, 1, pool);
+
+    if(status == EFI_INVALID_PARAMETER)
+    {
+        Print(L"invalid pool pointer\n");
+    }
+    else
+    {
+        Print(L"memory pool successfully freed\n");
+    }
 }
 
 /**
@@ -216,20 +255,20 @@ efi_main(
 	BootInfo_t boot_info;
 
 	EFI_CONFIGURATION_TABLE* configTable = SystemTable->ConfigurationTable;
-	void* rsdp = NULL; 
+	void* rsdpArray = m_malloc(1024); 
 	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;
 
 	for (UINTN index = 0; index < SystemTable->NumberOfTableEntries; index++){
 		if (CompareGuid(&configTable[index].VendorGuid, &Acpi2TableGuid)){
-			if (mystrcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8)){
-				rsdp = (void*)configTable->VendorTable;
+			if (m_strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8)){
+				rsdpArray = (void*)configTable->VendorTable;
 				//break;
 			}
 		}
 		configTable++;
 	}
 
-	boot_info.rsdp = rsdp;
+	boot_info.rsdp = rsdpArray;
 
 	Framebuffer* framebuffer = NULL;
 
