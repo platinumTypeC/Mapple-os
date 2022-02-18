@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 void init_graphics(
-	Boot_Info* boot_info
+	BootInfo_t* boot_info
 );
 
 void debug_patern(

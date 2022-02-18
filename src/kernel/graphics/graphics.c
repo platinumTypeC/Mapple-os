@@ -5,11 +5,11 @@ uint64_t HorizontalResolution;
 uint64_t VerticalResolution;
 
 void init_graphics(
-	Boot_Info* boot_info
+	BootInfo_t* boot_info
 ){
-	FrameBufferBaseAddress = boot_info->FrameBufferBaseAddress;
-	HorizontalResolution = boot_info->HorizontalResolution;
-	VerticalResolution = boot_info->VerticalResolution;
+	FrameBufferBaseAddress = (uint64_t)boot_info->framebuffer->BaseAddress;
+	HorizontalResolution = boot_info->framebuffer->Width;
+	VerticalResolution = boot_info->framebuffer->Height;
 	// Best Way to communicate debug info as of right now,
 	// I will need to figure out some graphics later
 	debug_patern(
