@@ -1,4 +1,6 @@
-ARCH                := $(shell uname -m | sed s,i[3456789]86,ia32,)
+CC                       = gcc
+
+ARCH                    := $(shell uname -m | sed s,i[3456789]86,ia32,)
 
 BOOTLOADER_SRCFILES     := $(shell find . -name '*.c')
 BOOTLOADER_OBJS          = $(BOOTLOADER_SRCFILES:.c=.o)
@@ -21,7 +23,7 @@ CFLAGS          		 = -I../kernel/include -Iefinclude -fno-stack-protector -fpic 
 all: ../boot.efi
 	@echo done compiling bootloader.
 
-%.o: %.c $(shell find . -name "*.h") ../kernel/include/config.h
+%.o: %.c $(shell find .. -name "*.h")
 	gcc ${CFLAGS} -c $< -o $@
 
 ../boot.so: ${BOOTLOADER_OBJS}

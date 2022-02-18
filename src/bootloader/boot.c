@@ -11,6 +11,83 @@
 #include "include/loader.h"
 #include <mapple/config.h>
 
+typedef struct {
+	void* BaseAddress;
+	uint64_t BufferSize;
+	uint64_t Width;
+	uint64_t Height;
+	uint64_t PixelsPerScanLine;
+} Framebuffer;
+
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
+
+typedef struct {
+	unsigned char magic[2];
+	unsigned char mode;
+	unsigned char charsize;
+} PSF1_HEADER;
+
+typedef struct {
+	PSF1_HEADER* psf1_Header;
+	void* glyphBuffer;
+} PSF1_FONT;
+
+typedef struct {
+	Framebuffer* framebuffer;
+	PSF1_FONT* psf1_Font;
+	EFI_MEMORY_DESCRIPTOR* mMap;
+	uint64_t mMapSize;
+	uint64_t mMapDescSize;
+	void* rsdp;
+} BootInfo_t;
+
+EFI_STATUS LoadFont(PSF1_FONT** fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable){
+	EFI_FILE* fontImageFile;
+	CHECKER(
+		get_system_root()->Open(
+			get_system_root(),
+			&fontImageFile,
+			FONT_FILE_PATH,
+			EFI_FILE_MODE_READ, 
+			EFI_FILE_READ_ONLY
+		),
+		L"Error: unable to get Font File Image, error: %s\n\r"
+	);
+
+	PSF1_HEADER* fontHeader = NULL;
+
+	// Going to go with the assumtion that this does not fail
+	SystemTable->BootServices->AllocatePool(
+		EfiLoaderData,
+		sizeof(PSF1_HEADER),
+		(void**)fontHeader
+	);
+
+	UINTN size = sizeof(PSF1_FONT);
+
+	fontImageFile->Read(fontImageFile, &size, fontHeader);
+
+	if (fontHeader->magic[0] != PSF1_MAGIC0 || fontHeader->magic[1] != PSF1_MAGIC1){
+		Print(L"Error: Error The Font file Magic Numbers do not match\n\r");
+		return EFI_UNSUPPORTED;
+	}
+
+	UINTN glyphBufferSize = fontHeader->charsize * 256;
+	if (fontHeader->mode == 1) { //512 glyph mode
+		glyphBufferSize = fontHeader->charsize * 512;
+	}
+
+	void* glyphBuffer;
+	{
+		fontImageFile->SetPosition(fontImageFile, sizeof(PSF1_HEADER));
+		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
+		fontImageFile->Read(fontImageFile, &glyphBufferSize, glyphBuffer);
+	};
+
+	return EFI_SUCCESS;
+};
+
 
 EFI_STATUS
 get_memory_map(
@@ -55,15 +132,12 @@ get_memory_map(
 	return EFI_SUCCESS;
 }
 
-typedef struct s_boot_info {
-	EFI_MEMORY_DESCRIPTOR* memory_map;
-	UINTN memory_map_size;
-	UINTN memory_map_descriptor_size;
-	UINTN FrameBufferBaseAddress;
-	UINTN HorizontalResolution;
-	UINTN VerticalResolution;
-	UINTN PixelsPerScanLine;
-} Kernel_Boot_Info;
+UINTN mystrcmp(CHAR8* a, CHAR8* b, UINTN length){
+	for (UINTN i = 0; i < length; i++){
+		if (*a != *b) return 0;
+	}
+	return 1;
+}
 
 /**
  * 
@@ -84,8 +158,7 @@ efi_main(
 	UINTN memory_map_size = 0;
 	UINTN descriptor_size;
 	UINT32 descriptor_version;
-	void (*kernel_entry)(Kernel_Boot_Info* boot_info);
-	Kernel_Boot_Info boot_info;
+	void (*kernel_entry)(BootInfo_t* boot_info);
 
     InitializeLib(ImageHandle, SystemTable);
 
@@ -112,16 +185,43 @@ efi_main(
 	Print(L"Exting Booting Service into kernel...\n");
 #endif
 	
-	kernel_entry = (void (*)(Kernel_Boot_Info*))*KernelEnteryPoint;
+	kernel_entry = (void (*)(BootInfo_t*))*KernelEnteryPoint;
 
+	BootInfo_t boot_info;
 
-	boot_info.memory_map = memory_map;
-	boot_info.memory_map_size = memory_map_size;
-	boot_info.memory_map_descriptor_size = descriptor_size;
-	boot_info.HorizontalResolution = get_gop_protocol()->Mode->Info->HorizontalResolution;
-	boot_info.VerticalResolution = get_gop_protocol()->Mode->Info->VerticalResolution;
-	boot_info.FrameBufferBaseAddress = get_gop_protocol()->Mode->FrameBufferBase;
-	boot_info.PixelsPerScanLine = get_gop_protocol()->Mode->Info->PixelsPerScanLine;
+	EFI_CONFIGURATION_TABLE* configTable = SystemTable->ConfigurationTable;
+	void* rsdp = NULL; 
+	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;
+
+	for (UINTN index = 0; index < SystemTable->NumberOfTableEntries; index++){
+		if (CompareGuid(&configTable[index].VendorGuid, &Acpi2TableGuid)){
+			if (mystrcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8)){
+				rsdp = (void*)configTable->VendorTable;
+				//break;
+			}
+		}
+		configTable++;
+	}
+
+	boot_info.rsdp = rsdp;
+
+	Framebuffer* framebuffer = NULL;
+
+	framebuffer->BaseAddress = (void*)get_gop_protocol()->Mode->FrameBufferBase;
+	framebuffer->BufferSize  = get_gop_protocol()->Mode->FrameBufferSize;
+	framebuffer->Width = get_gop_protocol()->Mode->Info->HorizontalResolution;
+	framebuffer->Height = get_gop_protocol()->Mode->Info->VerticalResolution;
+	framebuffer->PixelsPerScanLine = get_gop_protocol()->Mode->Info->PixelsPerScanLine;
+
+	boot_info.framebuffer = framebuffer;
+	
+	PSF1_FONT* defaultFont = NULL;
+
+	// This is comented since there are some probleams pertaning to the file system that are making it
+	// Difficult to load this
+	// CHECKER(LoadFont(&defaultFont, ImageHandle, SystemTable), L"Error: Unable to Load Font FIle Image, error: %s\n\r");
+
+	boot_info.psf1_Font = defaultFont;
 
 	// There is a status error but it works. so I will Probably re write this later
 	gBS->ExitBootServices(ImageHandle, memory_map_key);
@@ -132,7 +232,7 @@ efi_main(
 
 	kernel_entry(&boot_info);
 #if MAPPLE_DEBUG != 0 
-	Print(L"Debug: This Here means your kernel is faulty..\n\r");
+	Print(L"Error: This Here means your kernel is faulty..\n\r");
 #endif
 
     return EFI_SUCCESS;
