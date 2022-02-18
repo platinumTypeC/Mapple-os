@@ -49,7 +49,7 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 			get_system_root(), &fontImageFile, FONT_FILE_PATH,
 			EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY
 		)
-	,
+		,
 		L"Error: unable to get Font File Image, error: %s\n\r"
 	);
 	
@@ -103,11 +103,13 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 	};
 	
 
-	SystemTable->BootServices->AllocatePool(
-		EfiLoaderData,
-		sizeof(PSF1_FONT),
-		(void**)&fontPs1
-	);
+	CHECKER(
+		uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4
+			EfiLoaderData,sizeof(PSF1_FONT),
+			(void**)&fontPs1)
+		,
+		L"Error: Unable to allocate Font, error: %s\n\r"
+	)
 
 	fontPs1->psf1_Header = fontHeader;
 	fontPs1->glyphBuffer = glyphBuffer;
