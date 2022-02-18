@@ -25,13 +25,13 @@ iso:
 	cp src/boot.efi dist/EFI/Boot/
 	cp src/kernel.elf dist/
 	cp src/startup.nsh dist/
-	cp -r data dist/
+	cp -r data/* dist/
 	dd if=/dev/zero of=Mapple.img bs=1M count=100
 	mformat -i Mapple.img ::
 	mcopy -si Mapple.img dist/* ::
 
 clean:
-	@rm -rf $(shell find src -name "*.o") $(shell find src -name "*.so") $(shell find src -name "*.efi") $(shell find src -name "*.elf")
+	@rm -rf $(shell find src -name "*.o") $(shell find src -name "*.so") $(shell find src -name "*.efi") $(shell find src -name "*.elf") $(shell find . -name '*.img')
 	@rm -rf dist/
 
 run:
