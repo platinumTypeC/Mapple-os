@@ -62,8 +62,6 @@ EFI_STATUS find_video_mode(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 	IN const EFI_GRAPHICS_PIXEL_FORMAT target_pixel_format,
 	OUT UINTN* video_mode)
 {
-	/** Program status. */
-	EFI_STATUS status;
 	/** The size of the video mode info struct. */
 	UINTN size_of_mode_info;
 	/** The video mode info struct. */
@@ -75,14 +73,12 @@ EFI_STATUS find_video_mode(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 			Print(L"Debug: Testing video mode: '%llu'\n", i);
 		#endif
 
-		status = uefi_call_wrapper(protocol->QueryMode, 4,
-			protocol, i, &size_of_mode_info, &mode_info);
-		if(EFI_ERROR(status)) {
-			Print(L"Error: Error querying video mode: %s\n",
-				get_efi_error_message(status));
-
-			return status;
-		}
+		CHECKER(
+			uefi_call_wrapper(protocol->QueryMode, 4,
+				protocol, i, &size_of_mode_info, &mode_info)
+			,
+			L"Error: Error querying video mode: %s\n"
+		);
 
 		if(mode_info->HorizontalResolution == target_width &&
 			mode_info->VerticalResolution == target_height &&
@@ -115,26 +111,22 @@ EFI_STATUS set_graphics_mode(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
 	IN const UINT32 target_height,
 	IN const EFI_GRAPHICS_PIXEL_FORMAT target_pixel_format)
 {
-	/** Program status. */
-	EFI_STATUS status;
 	/** The graphics mode number. */
 	UINTN graphics_mode_num = 0;
 
-	status = find_video_mode(protocol, target_width, target_height,
-		target_pixel_format, &graphics_mode_num);
-	if(EFI_ERROR(status)) {
-		// Error will already have been printed.
-		return status;
-	}
+	CHECKER(
+		find_video_mode(protocol, target_width, target_height,
+			target_pixel_format, &graphics_mode_num)
+		,
+		L"Error: Unable to find video mode, error: %s\n\r"
+	);
 
-	status = uefi_call_wrapper(protocol->SetMode, 2,
-		protocol, graphics_mode_num);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error setting graphics mode: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
+	CHECKER(
+		uefi_call_wrapper(protocol->SetMode, 2,
+			protocol, graphics_mode_num)
+		,
+		L"Error: Error setting graphics mode: %s\n"
+	);
 
 	return EFI_SUCCESS;
 }
@@ -176,28 +168,29 @@ VOID draw_test_screen(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol)
  */
 EFI_STATUS init_graphics_output_service(EFI_HANDLE ImageHandle)
 {
-    EFI_STATUS status;
-    status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopGuid, NULL, (void**)&graphics_output_protocol);
-    if(EFI_ERROR(status)){
-        Print(L"Error: Unable to locate GOP\n\r");
-        return status;
-    }
+    
+    CHECKER(
+		uefi_call_wrapper(BS->LocateProtocol, 3, 
+			&gopGuid, NULL, (void**)&graphics_output_protocol)
+		,
+		L"Error: Unable to locate GOP\n\r"
+	);
 #if MAPPLE_DEBUG != 0
     Print(L"Debug: Located the graphics output protocol");
 #endif
 
     if (graphics_output_protocol){
-        status = set_graphics_mode(graphics_output_protocol, TARGET_SCREEN_WIDTH,TARGET_SCREEN_HEIGHT, PixelBlueGreenRedReserved8BitPerColor);
-        if (EFI_ERROR(status)){
-                Print(L"Fatal Error: Error seting graphics mode: %s\n",
-                    get_efi_error_message(status)
-                );
-        }
+        CHECKER(
+			set_graphics_mode(graphics_output_protocol, 
+				TARGET_SCREEN_WIDTH,TARGET_SCREEN_HEIGHT, PixelBlueGreenRedReserved8BitPerColor)
+			,
+			L"Fatal Error: Error seting graphics mode: %s\n"
+		);
+	}
 #if MAPPLE_TEST_SCENE_ONE != 0
-		// This is the tile drawing test
-		draw_test_screen(graphics_output_protocol);
+	// This is the tile drawing test
+	draw_test_screen(graphics_output_protocol);
 #endif
-    }
     
 	return EFI_SUCCESS;
 }

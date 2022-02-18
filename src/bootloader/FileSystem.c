@@ -17,31 +17,27 @@ EFI_STATUS init_file_system_service(void)
 		Print(L"Debug: Initialising File System service\n");
 	#endif
 
-	EFI_STATUS status = uefi_call_wrapper(gBS->LocateProtocol, 3,
-		&gEfiSimpleFileSystemProtocolGuid, NULL, &FileSystem);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error locating Simple File System Protocol: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
+	CHECKER(
+		uefi_call_wrapper(gBS->LocateProtocol, 3,
+			&gEfiSimpleFileSystemProtocolGuid, NULL, &FileSystem)
+		,
+		L"Error: Error locating Simple File System Protocol: %s\n"
+	);
 
 	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Located Simple File System Protocol\n");
 	#endif
 
-	status = uefi_call_wrapper(FileSystem->OpenVolume, 2,
-		FileSystem, &root_file_system);
-	if(EFI_ERROR(status)) {
-		Print(L"Fatal Error: Error opening root volume: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
+	CHECKER(
+		uefi_call_wrapper(FileSystem->OpenVolume, 2,
+			FileSystem, &root_file_system)
+		,
+		L"Fatal Error: Error opening root volume: %s\n"
+	);
 	
     #if MAPPLE_DEBUG != 0
 		Print(L"Debug: File System Initialized \n");
 	#endif
 
-	return status;
+	return EFI_SUCCESS;
 }

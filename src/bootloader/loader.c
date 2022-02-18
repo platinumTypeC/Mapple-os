@@ -27,29 +27,25 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 			"offset '0x%llx'\n", segment_file_offset);
 	#endif
 
-	status = uefi_call_wrapper(kernel_img_file->SetPosition, 2,
-		kernel_img_file, segment_file_offset);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error setting file pointer position to "
-			L"segment offset: %s\n", get_efi_error_message(status));
-
-		return status;
-	}
+	CHECKER(
+		uefi_call_wrapper(kernel_img_file->SetPosition, 2,
+			kernel_img_file, segment_file_offset)
+		,
+		L"Error: Error setting file pointer position to segment offset: %s\n"
+	);
 
 	#if MAPPLE_DEBUG != 0
 		Print(L"Debug: Allocating %lu pages at address '0x%llx'\n",
 			segment_page_count, segment_virtual_address);
 	#endif
 
-	status = uefi_call_wrapper(gBS->AllocatePages, 4,
-		AllocateAnyPages, EfiLoaderData, segment_page_count,
-		(EFI_PHYSICAL_ADDRESS*)segment_virtual_address);
-	if(EFI_ERROR(status)) {
-		Print(L"Error: Error allocating pages for ELF segment: %s\n",
-			get_efi_error_message(status));
-
-		return status;
-	}
+	CHECKER(
+		uefi_call_wrapper(gBS->AllocatePages, 4,
+			AllocateAnyPages, EfiLoaderData, segment_page_count,
+			(EFI_PHYSICAL_ADDRESS*)segment_virtual_address)
+		,
+		L"Error: Error allocating pages for ELF segment: %s\n"	
+	);
 
 	if(segment_file_size > 0) {
 		buffer_read_size = segment_file_size;
@@ -59,54 +55,46 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 				buffer_read_size);
 		#endif
 
-		status = uefi_call_wrapper(gBS->AllocatePool, 3,
-			EfiLoaderCode, buffer_read_size, (VOID**)&program_data);
-		if(EFI_ERROR(status)) {
-			Print(L"Error: Error allocating kernel segment buffer: %s\n",
-				get_efi_error_message(status));
-
-			return status;
-		}
-
+		CHECKER(
+			uefi_call_wrapper(gBS->AllocatePool, 3,
+				EfiLoaderCode, buffer_read_size, (VOID**)&program_data)
+			,
+			L"Error: Error allocating kernel segment buffer: %s\n"
+		);
+		
 		#if MAPPLE_DEBUG != 0
 			Print(L"Debug: Reading segment data with file size '0x%llx'\n",
 				buffer_read_size);
 		#endif
 
-		status = uefi_call_wrapper(kernel_img_file->Read, 3,
-			kernel_img_file, &buffer_read_size, (VOID*)program_data);
-		if(EFI_ERROR(status)) {
-			Print(L"Error: Error reading segment data: %s\n",
-				get_efi_error_message(status));
-
-			return status;
-		}
+		CHECKER(
+			uefi_call_wrapper(kernel_img_file->Read, 3,
+				kernel_img_file, &buffer_read_size, (VOID*)program_data)
+			,
+			L"Error: Error reading segment data: %s\n"
+		);
 
 		#if MAPPLE_DEBUG != 0
 			Print(L"Debug: Copying segment to memory address '0x%llx'\n",
 				segment_virtual_address);
 		#endif
 
-		status = uefi_call_wrapper(gBS->CopyMem, 3,
-			segment_virtual_address, program_data, segment_file_size);
-		if(EFI_ERROR(status)) {
-			Print(L"Error: Error copying program section "
-				L"into memory: %s\n", get_efi_error_message(status));
-
-			return status;
-		}
+		CHECKER(
+			uefi_call_wrapper(gBS->CopyMem, 3,
+				segment_virtual_address, program_data, segment_file_size)
+			,
+			L"Error: Error copying program section into memory: %s\n"
+		);
 
 		#if MAPPLE_DEBUG != 0
 			Print(L"Debug: Freeing program section data buffer\n");
 		#endif
 
-		status = uefi_call_wrapper(gBS->FreePool, 1, program_data);
-		if(EFI_ERROR(status)) {
-			Print(L"Error: Error freeing program section: %s\n",
-				get_efi_error_message(status));
-
-			return status;
-		}
+		CHECKER(
+			uefi_call_wrapper(gBS->FreePool, 1, program_data)
+			,
+			L"Error: Error freeing program section: %s\n"
+		);
 	}
 
 	// As per ELF Standard, if the size in memory is larger than the file size
@@ -240,7 +228,7 @@ EFI_STATUS load_kernel(
 			get_system_root(), &kernelImageFile, KERNEL_EXECUTABLE_PATH,
 			EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY
 		)
-	,
+		,
 		L"Error: Unable to get kernel Image, error: %s\n\r"
 	);
 
