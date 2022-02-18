@@ -30,7 +30,7 @@
 #define TEST_SCREEN_SECONDARY_COLOUR    0x00FF80BF
 
 #define KERNEL_EXECUTABLE_PATH L"\\kernel.elf"
-#define FONT_FILE_PATH L"\\deafultFont.psf"
+#define FONT_FILE_PATH L"\\zap-light16.psf"
 
 /**
  * @brief The Debug Switch
