@@ -42,23 +42,24 @@ typedef struct {
 	void* rsdp;
 } BootInfo_t;
 
-EFI_STATUS LoadFont(PSF1_FONT** fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable){
+EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable){
 	EFI_FILE* fontImageFile;
 	CHECKER(
-		get_system_root()->Open(
-			get_system_root(),
-			&fontImageFile,
-			FONT_FILE_PATH,
-			EFI_FILE_MODE_READ, 
-			EFI_FILE_READ_ONLY
-		),
+		uefi_call_wrapper(get_system_root()->Open, 5,
+			get_system_root(), &fontImageFile, FONT_FILE_PATH,
+			EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY
+		)
+	,
 		L"Error: unable to get Font File Image, error: %s\n\r"
 	);
+	
 
 	PSF1_HEADER* fontHeader = NULL;
 
 	// Going to go with the assumtion that this does not fail
-	SystemTable->BootServices->AllocatePool(
+	uefi_call_wrapper(
+		SystemTable->BootServices->AllocatePool,
+		5,
 		EfiLoaderData,
 		sizeof(PSF1_HEADER),
 		(void**)fontHeader
@@ -66,24 +67,53 @@ EFI_STATUS LoadFont(PSF1_FONT** fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABL
 
 	UINTN size = sizeof(PSF1_FONT);
 
-	fontImageFile->Read(fontImageFile, &size, fontHeader);
+	Print(L"A 000000000\n\r");
+
+	CHECKER(uefi_call_wrapper(fontImageFile->Read, 4, fontImageFile, &size, fontHeader), L"Error: Unable to read font file, error: %s \n\r");
 
 	if (fontHeader->magic[0] != PSF1_MAGIC0 || fontHeader->magic[1] != PSF1_MAGIC1){
 		Print(L"Error: Error The Font file Magic Numbers do not match\n\r");
 		return EFI_UNSUPPORTED;
-	}
+	};
+
 
 	UINTN glyphBufferSize = fontHeader->charsize * 256;
 	if (fontHeader->mode == 1) { //512 glyph mode
 		glyphBufferSize = fontHeader->charsize * 512;
 	}
+	
 
 	void* glyphBuffer;
 	{
-		fontImageFile->SetPosition(fontImageFile, sizeof(PSF1_HEADER));
-		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
-		fontImageFile->Read(fontImageFile, &glyphBufferSize, glyphBuffer);
+		CHECKER(
+			uefi_call_wrapper(fontImageFile->SetPosition, 4,fontImageFile, sizeof(PSF1_HEADER))
+			,
+			L"Error: gting glyph info from psf1 font, error: %s\n\r"
+		);
+		CHECKER(
+			uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4,
+				EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer)
+			,
+			L"Error: Unable to Allocate Pool for glyphBuffer, error: %s\n\r"
+		);
+		CHECKER(
+			uefi_call_wrapper(fontImageFile->Read, 4,
+				fontImageFile, &glyphBufferSize, glyphBuffer)
+			,
+			L"Error: Unable to read glyph from font file, error: %s\n\r"
+		);
+		Print(L"A 000000000\n\r");
 	};
+	
+
+	SystemTable->BootServices->AllocatePool(
+		EfiLoaderData,
+		sizeof(PSF1_FONT),
+		(void**)&fontPs1
+	);
+
+	fontPs1->psf1_Header = fontHeader;
+	fontPs1->glyphBuffer = glyphBuffer;
 
 	return EFI_SUCCESS;
 };
@@ -181,9 +211,6 @@ efi_main(
 
 	get_memory_map(&memory_map, &descriptor_version, &descriptor_size, &memory_map_size, &memory_map_key);
 
-#if MAPPLE_DEBUG != 0
-	Print(L"Exting Booting Service into kernel...\n");
-#endif
 	
 	kernel_entry = (void (*)(BootInfo_t*))*KernelEnteryPoint;
 
@@ -215,13 +242,15 @@ efi_main(
 
 	boot_info.framebuffer = framebuffer;
 	
-	PSF1_FONT* defaultFont = NULL;
+	PSF1_FONT defaultFont;
 
-	// This is comented since there are some probleams pertaning to the file system that are making it
-	// Difficult to load this
-	// CHECKER(LoadFont(&defaultFont, ImageHandle, SystemTable), L"Error: Unable to Load Font FIle Image, error: %s\n\r");
+	CHECKER(LoadFont(&defaultFont, ImageHandle, SystemTable), L"Error: Unable to Load Font FIle Image, error: %s\n\r");
 
-	boot_info.psf1_Font = defaultFont;
+	boot_info.psf1_Font = &defaultFont;
+
+#if MAPPLE_DEBUG != 0
+	Print(L"Exting Booting Service into kernel...\n");
+#endif
 
 	// There is a status error but it works. so I will Probably re write this later
 	gBS->ExitBootServices(ImageHandle, memory_map_key);
