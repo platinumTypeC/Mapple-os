@@ -15,6 +15,7 @@ wsl: compile iso runwsl
 
 install:
 	sudo apt install -y gcc
+	sudo apt install -y g++
 	sudo apt install -y binutils
 	sudo apt install -y iat
 	sudo apt install -y mtools
@@ -27,7 +28,7 @@ iso:
 	cp src/startup.nsh dist/
 	cp -r data/* dist/
 	dd if=/dev/zero of=Mapple.img bs=1M count=100
-	mformat -i Mapple.img ::
+	mformat -Fi Mapple.img ::
 	mcopy -si Mapple.img dist/* ::
 
 clean:
