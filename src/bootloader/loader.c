@@ -292,20 +292,13 @@ EFI_STATUS load_kernel(
 	Print(L"Debug: Freeing kernel header buffer\n");
 #endif
 
-	CHECKER(
-		uefi_call_wrapper(gBS->FreePool, 1, (VOID*)KernelHeader),
-		L"Error: Unable to Free Pool of kernel header, error: %s\n\r"
-	);
+	FreePool((VOID*)KernelHeader);
 
 #if MAPPLE_DEBUG != 0
 	Print(L"Debug: Freeing kernel program header buffer\n");
 #endif
 
-	CHECKER(
-		uefi_call_wrapper(gBS->FreePool, 1, (VOID*)KernelProgramHeaders),
-
-		L"Error: Unable to FreePool kernel Progarm Headers, error: %s\n\r"
-	);
+	FreePool((VOID*)KernelProgramHeaders);
 	
 	return EFI_SUCCESS;
 };
