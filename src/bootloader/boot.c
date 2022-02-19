@@ -103,13 +103,9 @@ EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE
 	};
 	
 
-	CHECKER(
-		uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4
-			EfiLoaderData,sizeof(PSF1_FONT),
-			(void**)&fontPs1)
-		,
-		L"Error: Unable to allocate Font, error: %s\n\r"
-	);
+	uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4
+		EfiLoaderData,sizeof(PSF1_FONT),
+		(void**)&fontPs1);
 
 	fontPs1->psf1_Header = fontHeader;
 	fontPs1->glyphBuffer = glyphBuffer;
@@ -255,20 +251,20 @@ efi_main(
 	BootInfo_t boot_info;
 
 	EFI_CONFIGURATION_TABLE* configTable = SystemTable->ConfigurationTable;
-	void* rsdpArray = m_malloc(1024); 
+	void* rsdp; 
 	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;
 
 	for (UINTN index = 0; index < SystemTable->NumberOfTableEntries; index++){
 		if (CompareGuid(&configTable[index].VendorGuid, &Acpi2TableGuid)){
 			if (m_strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8)){
-				rsdpArray = (void*)configTable->VendorTable;
+				rsdp = (void*)configTable->VendorTable;
 				//break;
 			}
 		}
 		configTable++;
 	}
 
-	boot_info.rsdp = rsdpArray;
+	boot_info.rsdp = rsdp;
 
 	Framebuffer* framebuffer = NULL;
 
