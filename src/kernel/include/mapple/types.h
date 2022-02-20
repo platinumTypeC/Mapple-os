@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <mapple/paging/pageTableManager.h>
 
 typedef struct {
     uint64_t Type;
@@ -11,7 +10,6 @@ typedef struct {
     uint64_t NumberOfPages;
     uint64_t Attribute;
 } EFI_MEMORY_DESCRIPTOR;
-
 
 typedef struct {
 	void* BaseAddress;
@@ -42,10 +40,6 @@ struct BootInfo_t{
 	uint64_t mMapSize;
 	uint64_t mMapDescSize;
 	void* rsdp;
-};
-
-struct KernelInfo_t {
-    PageTableManager_t* KernelPageTableManager;
 };
 
 struct Point_t{

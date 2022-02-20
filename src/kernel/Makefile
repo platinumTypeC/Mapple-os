@@ -16,5 +16,8 @@ all: ../kernel.elf
 %.o: %.cpp $(shell find . -name "*.h")
 	${CC} ${CFLAGS} -c $< -o $@;
 
+%_asm.o: %.asm
+	nasm $^ -f elf64 -o $@
+
 ../kernel.elf: ${KERNEL_OBJS}
-	${CC} -T kernel.ld -g3 -o $@ ${KERNEL_LDFLAGS} ${KERNEL_OBJS} ${KERNEL_LIBS}
+	${CC} -T kernel.ld -g3 -o $@ ${KERNEL_LDFLAGS} $^ ${KERNEL_LIBS}

@@ -24,3 +24,6 @@ class BasicRenderer_t{
     void ClearMouseCursor(uint8_t* MouseCursor, Point_t Position);
     bool MouseDrawn;
 };
+
+void set_global_renderer(BasicRenderer_t _GlobalRenderer);
+BasicRenderer_t* get_global_renderer();
