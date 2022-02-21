@@ -10,8 +10,8 @@
 #include <efi.h>
 #include <efilib.h>
 
-#include "include/elf.h"
-#include "include/error.h"
+#include <include/elf.h>
+#include <include/error.h>
 #include <mapple/config.h>
 
 

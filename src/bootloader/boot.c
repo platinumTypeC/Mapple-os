@@ -250,6 +250,10 @@ efi_main(
 
 	BootInfo_t boot_info;
 
+	boot_info.mMap = memory_map;
+	boot_info.mMapSize = memory_map_size;
+	boot_info.mMapDescSize = descriptor_size;
+
 	EFI_CONFIGURATION_TABLE* configTable = SystemTable->ConfigurationTable;
 	void* rsdp; 
 	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;

@@ -17,7 +17,7 @@ endif
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 				  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) 
 
-CFLAGS          		 = -I../kernel/include -Iefinclude -fno-stack-protector -fpic \
+CFLAGS          		 = -I../kernel/include -Iefinclude -I. -fno-stack-protector -fpic \
 		  		  		   -fshort-wchar -mno-red-zone -Wall
 
 all: ../boot.efi
