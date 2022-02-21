@@ -1,130 +1,152 @@
+/**
+ * @file boot.c
+ * @author Ansh Mathur (worldanvilbild@gmail.com)
+ * @brief The main Bootsec of the Mapple-os kernel
+ * @version 0.1
+ * @date 2022-02-21
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <efi.h>
 #include <efilib.h>
 #include <efiapi.h>
 #include "include/elf.h"
-
 #include "include/error.h"
-#include "include/serialService.h"
-#include "include/utils.h"
-#include "include/graphics.h"
-#include "include/FileSystem.h"
-#include "include/loader.h"
 #include <mapple/config.h>
+#include <mapple/types.h>
 
-typedef struct {
-	void* BaseAddress;
-	uint64_t BufferSize;
-	uint64_t Width;
-	uint64_t Height;
-	uint64_t PixelsPerScanLine;
-} Framebuffer;
+EFI_HANDLE m_IH;
+EFI_SYSTEM_TABLE* m_ST = NULL;
+EFI_FILE_PROTOCOL* RTFileSystem = NULL;
+EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFsProtocol = NULL;
+EFI_GRAPHICS_OUTPUT_PROTOCOL* gGOPProtocol = NULL;
 
-#define PSF1_MAGIC0 0x36
-#define PSF1_MAGIC1 0x04
+BootInfo_t gbootInfo;
 
-typedef struct {
-	unsigned char magic[2];
-	unsigned char mode;
-	unsigned char charsize;
-} PSF1_HEADER;
+#if MAPPLE_DEBUG != 0
+	#define DebugPrint(...) Print(L"Debug: "__VA_ARGS__)
+#else
+	#define DebugPrint(...)
+#endif
 
-typedef struct {
-	PSF1_HEADER* psf1_Header;
-	void* glyphBuffer;
-} PSF1_FONT;
-
-typedef struct {
-	Framebuffer* framebuffer;
-	PSF1_FONT* psf1_Font;
-	EFI_MEMORY_DESCRIPTOR* mMap;
-	uint64_t mMapSize;
-	uint64_t mMapDescSize;
-	void* rsdp;
-} BootInfo_t;
-
-EFI_STATUS LoadFont(PSF1_FONT* fontPs1, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable){
-	EFI_FILE* fontImageFile;
+EFI_STATUS
+EFIAPI
+InitFileSystem(){
 	CHECKER(
-		uefi_call_wrapper(get_system_root()->Open, 5,
-			get_system_root(), &fontImageFile, FONT_FILE_PATH,
-			EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY
-		)
+		uefi_call_wrapper(gBS->LocateProtocol, 3, 
+			&gEfiSimpleFileSystemProtocolGuid, NULL, &SimpleFsProtocol)
 		,
-		L"Error: unable to get Font File Image, error: %s\n\r"
+		L"Unable to Locate FileSystem !, error: %s\n"
 	);
-	
+	DebugPrint(L"Located Filesystem\n");
+	CHECKER(
+		uefi_call_wrapper(SimpleFsProtocol->OpenVolume, 2, SimpleFsProtocol,
+			&RTFileSystem)
+		,
+		L"Failed to Open System Root !, error: %s\n"
+	);
+	DebugPrint(L"Opened volume\n");
+	return EFI_SUCCESS;
+};
 
-	PSF1_HEADER* fontHeader = NULL;
-
-	// Going to go with the assumtion that this does not fail
-	uefi_call_wrapper(
-		SystemTable->BootServices->AllocatePool,
-		5,
-		EfiLoaderData,
-		sizeof(PSF1_HEADER),
-		(void**)fontHeader
+EFI_STATUS
+EFIAPI
+LoadFile(
+	CHAR16* FileName,
+	EFI_PHYSICAL_ADDRESS *FileAddr,
+	UINTN *FilePageSize
+){
+	DebugPrint(L"Starting to Load File\n");
+	EFI_FILE_PROTOCOL *File;
+	CHECKER(
+		uefi_call_wrapper(RTFileSystem->Open, 5, RTFileSystem, &File, 
+			FileName, EFI_FILE_MODE_READ, 0)
+		,
+		L"Unable to Open File path !, error: %s\n"
 	);
 
-	UINTN size = sizeof(PSF1_FONT);
+  	UINTN FileInfoBufferSize = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * StrLen(FileName) + 2;
+  	UINT8 FileInfoBuffer[FileInfoBufferSize];
 
-	CHECKER(uefi_call_wrapper(fontImageFile->Read, 4, fontImageFile, &size, fontHeader), L"Error: Unable to read font file, error: %s \n\r");
+  	CHECKER(
+		uefi_call_wrapper(File->GetInfo, 4, File, &gEfiFileInfoGuid, 
+			&FileInfoBufferSize, FileInfoBuffer)
+		,
+		L"Unable to get File Info !, error: %s\n"
+	);
 
-	if (fontHeader->magic[0] != PSF1_MAGIC0 || fontHeader->magic[1] != PSF1_MAGIC1){
-		Print(L"Error: Error The Font file Magic Numbers do not match\n\r");
-		return EFI_UNSUPPORTED;
-	};
+	DebugPrint(L"Got file Info\n");
+  
+	EFI_FILE_INFO *FileInfo = (EFI_FILE_INFO*)FileInfoBuffer;
+	UINTN FileSize = FileInfo->FileSize;
 
 
-	UINTN glyphBufferSize = fontHeader->charsize * 256;
-	if (fontHeader->mode == 1) { //512 glyph mode
-		glyphBufferSize = fontHeader->charsize * 512;
-	}
-	
+	DebugPrint(L"FileSize=%llu\n",FileSize);
+	*FilePageSize = (FileSize + 4095) / 4096;
+	*FileAddr = 0;
 
-	void* glyphBuffer;
-	{
-		CHECKER(
-			uefi_call_wrapper(fontImageFile->SetPosition, 4,fontImageFile, sizeof(PSF1_HEADER))
-			,
-			L"Error: gting glyph info from psf1 font, error: %s\n\r"
-		);
-		CHECKER(
-			uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4,
-				EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer)
-			,
-			L"Error: Unable to Allocate Pool for glyphBuffer, error: %s\n\r"
-		);
-		CHECKER(
-			uefi_call_wrapper(fontImageFile->Read, 4,
-				fontImageFile, &glyphBufferSize, glyphBuffer)
-			,
-			L"Error: Unable to read glyph from font file, error: %s\n\r"
-		);
-	};
-	
+	CHECKER(
+		uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, 
+			EfiLoaderData, *FilePageSize, FileAddr)
+		,
+		L"Unable to Allocate Pages for File !, error: %s\n"
+	);
 
-	uefi_call_wrapper(SystemTable->BootServices->AllocatePool, 4
-		EfiLoaderData,sizeof(PSF1_FONT),
-		(void**)&fontPs1);
+	DebugPrint(L"Allocated pages for File\n");
 
-	fontPs1->psf1_Header = fontHeader;
-	fontPs1->glyphBuffer = glyphBuffer;
+	CHECKER(
+		uefi_call_wrapper(File->Read, 3, File, &FileSize,
+    		(VOID *)*FileAddr)
+		,
+		L"Unable to Read File !, error: %s\n"
+	);
+
+	DebugPrint(L"Done Reading File\n");
 
 	return EFI_SUCCESS;
 };
 
+EFI_STATUS
+EFIAPI
+InitGOP(){
+	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+	CHECKER(
+		uefi_call_wrapper(BS->LocateProtocol, 3, 
+			&gopGuid, NULL, (void**)&gGOPProtocol)
+		,
+		L"Error: Unable to locate GOP !, error: %s\n\r"
+	);
+	gbootInfo.frameBuffer->BaseAddress = (void*)gGOPProtocol->Mode->FrameBufferBase;
+	gbootInfo.frameBuffer->BufferSize = gGOPProtocol->Mode->FrameBufferSize;
+	gbootInfo.frameBuffer->Width = gGOPProtocol->Mode->Info->HorizontalResolution;
+	gbootInfo.frameBuffer->Height = gGOPProtocol->Mode->Info->VerticalResolution;
+	gbootInfo.frameBuffer->PixelsPerScanLine = gGOPProtocol->Mode->Info->PixelsPerScanLine;
+
+	return EFI_SUCCESS;
+};
 
 EFI_STATUS
-get_memory_map(
-	OUT EFI_MEMORY_DESCRIPTOR** out_memory_map,
-	OUT UINT32* out_descripter_version,
-	OUT UINTN* out_descriptor_size,
-	OUT UINTN* out_memory_map_size,
-	OUT UINTN* out_map_key
-){
+EFIAPI
+InitAcpiTable(){
+	DebugPrint(L"Interating through Tables on device to find Vendor table...\n");
+	for (uint64_t Index = 0; Index < gST->NumberOfTableEntries; Index++) {
+		// if this is vendor table do this
+		if (CompareGuid (&AcpiTableGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
+			gbootInfo.rsdp = gST->ConfigurationTable[Index].VendorTable;
+			return EFI_SUCCESS;
+		}
+	};
+	DebugPrint(L"Unable to find it...\n");
+	return EFI_NOT_FOUND;
+};
+
+EFI_STATUS
+EFIAPI
+IniGetMemoryDescriptor(){
     EFI_STATUS status = EFI_SUCCESS;
 
-    EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
+    EFI_MEMORY_DESCRIPTOR* memory_map = NULL;
     UINT32 version = 0;
     UINTN map_key = 0;
     UINTN descriptor_size = 0;
@@ -136,76 +158,80 @@ get_memory_map(
     if (status == EFI_BUFFER_TOO_SMALL) {
         UINTN encompassing_size = memory_map_size + (2 * descriptor_size);
         void *buffer = NULL;
-        status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, encompassing_size, &buffer);
-        if (status == EFI_SUCCESS) {
-            memory_map = (EFI_MEMORY_DESCRIPTOR*) buffer;
-            memory_map_size = encompassing_size;
+        
+		CHECKER(
+			uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, encompassing_size, &buffer)
+			,
+			L"Unable to Allocate Pool for memoryMap !, error: %s\n"
+		);
 
-            status = uefi_call_wrapper(BS->GetMemoryMap, 5, &memory_map_size, memory_map, &map_key, &descriptor_size, &version);
-            if (status != EFI_SUCCESS) {
-                Print(L"Second call to GetMemoryMap failed for some reason.");
-			}
-		}
+		memory_map = (EFI_MEMORY_DESCRIPTOR*) buffer;
+		memory_map_size = encompassing_size;
+
+		CHECKER(
+			uefi_call_wrapper(BS->GetMemoryMap, 5, &memory_map_size, memory_map, &map_key, &descriptor_size, &version)
+			,
+			L"Unable to get Memory Map !, error: %s\n"
+		);
+	} else {
+		DebugPrint(L"this should be IMPOSSIBLE\n");
 	}
-	
-	*out_memory_map = memory_map;
-	*out_descripter_version = version;
-	*out_descriptor_size = descriptor_size;
-	*out_memory_map_size = memory_map_size;
-	*out_map_key = map_key;
+
+	gbootInfo.memoryMap.mMap = memory_map;
+	gbootInfo.memoryMap.mMapSize = memory_map_size;
+	gbootInfo.memoryMap.mMapKey = map_key;
+	gbootInfo.memoryMap.descVersion = version;
+	gbootInfo.memoryMap.descSize = descriptor_size;
 
 	return EFI_SUCCESS;
-}
+};
 
-UINTN m_strcmp(CHAR8* a, CHAR8* b, UINTN length){
-	for (UINTN i = 0; i < length; i++){
-		if (*a != *b) return 0;
-	}
-	return 1;
-}
-void* m_malloc(UINTN poolSize)
-{
-	EFI_STATUS status;
-	void* handle;
-	Print(L"allocating memory pool\n");
-	status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, poolSize, &handle);
+EFI_STATUS
+EFIAPI
+InitailizeAllProtocols(
+	EFI_HANDLE ImageHandle,
+	EFI_SYSTEM_TABLE* SystemTable
+){
+	m_IH = ImageHandle;
+	m_ST = SystemTable;
 
-	if(status == EFI_OUT_OF_RESOURCES)
-	{
-		Print(L"out of resources for pool\n");
-		return 0;
-	}
-	else if(status == EFI_INVALID_PARAMETER)
-	{
-		Print(L"invalid pool type\n");
-		return 0;
-	}
-	else
-	{
-		Print(L"memory pool successfully allocated\n");
-		return handle;
-	}
-}
+	DebugPrint(L"Initalizing the file protocol\n");
+	CHECKER(
+		InitFileSystem()
+		,
+		L"Error: Failed to Initialize FileSystem Protocol !, %s\n"
+	);
+	DebugPrint(L"Done Initializing file protocol\n");
+	
+	DebugPrint(L"Starting the Location GOP\n");
+	CHECKER(
+		InitGOP()
+		,
+		L"Unable to Locate GOP !, error: %s\n"
+	);
+	DebugPrint(L"Done Locating GOP\n");
 
-void m_free(void * pool)
-{
-    EFI_STATUS status;
-    Print(L"freeing memory pool\n");
-    status = uefi_call_wrapper(BS->FreePool, 1, pool);
+	DebugPrint(L"Starting to get Vendor Config Table\n");
+	CHECKER(
+		InitAcpiTable()
+		,
+		L"Unable to Get System Vendor Config Table !, error: %s\n"
+	);
+	DebugPrint(L"Got Vendor System Config Table\n");
 
-    if(status == EFI_INVALID_PARAMETER)
-    {
-        Print(L"invalid pool pointer\n");
-    }
-    else
-    {
-        Print(L"memory pool successfully freed\n");
-    }
-}
+	DebugPrint(L"Geting Memory descriptor\n");
+	CHECKER(
+		IniGetMemoryDescriptor()
+		,
+		L"Unable to get Memory Deskriptor !, error: %s"
+	);
+	DebugPrint(L"Done Geting Memory Descriptor\n");
+	return EFI_SUCCESS;
+};
 
 /**
- * 
- * @brief entry point of the entire os.
+ * @brief The bootloader entry point.
+ * most of the code is here.
  * 
  * @param ImageHandle 
  * @param SystemTable 
@@ -214,93 +240,21 @@ void m_free(void * pool)
 EFI_STATUS
 EFIAPI
 efi_main(
-    IN EFI_HANDLE ImageHandle,
-    IN EFI_SYSTEM_TABLE *SystemTable
+	EFI_HANDLE ImageHandle,
+	EFI_SYSTEM_TABLE* SystemTable
 ){
-	EFI_MEMORY_DESCRIPTOR* memory_map = NULL;
-	UINTN memory_map_key = 0;
-	UINTN memory_map_size = 0;
-	UINTN descriptor_size;
-	UINT32 descriptor_version;
-	void (*kernel_entry)(BootInfo_t* boot_info);
+	InitializeLib(ImageHandle, SystemTable);
+	InitailizeAllProtocols(ImageHandle, SystemTable);
 
-    InitializeLib(ImageHandle, SystemTable);
-
-	disableWatchDogTimer();
-	ResetConsole(SystemTable);
+	// Get Font file and load it into memory
+	EFI_PHYSICAL_ADDRESS FontFileMemLocation;
+	UINTN FontFilePageBufferSize;
 	
-	CHECKER(init_serial_service(), L"Error: Unable to init serial service, Error: %s\n\r");
-
-	CHECKER(init_graphics_output_service(ImageHandle), L"Error: Unable to init Graphics output protocol\n\r");
-
-	CHECKER(init_file_system_service(), L"Error: Unable to init file System, error: %s\n\r");
-
-	EFI_PHYSICAL_ADDRESS* KernelEnteryPoint = NULL;
-	CHECKER(load_kernel(KernelEnteryPoint), L"Unable to load kernel, error: %s\n\r");
-
-#if MAPPLE_DEBUG != 0
-	Print(L"Debug: Set Kernel Entry Point to: '0x%llu'\n", *KernelEnteryPoint);
-	Print(L"Debug: Geting Memory Map and Info\n");
-#endif
-
-	get_memory_map(&memory_map, &descriptor_version, &descriptor_size, &memory_map_size, &memory_map_key);
-
+	CHECKER(
+		LoadFile(FONT_FILE_PATH, &FontFileMemLocation, &FontFilePageBufferSize)
+		,
+		L"Unable to Load Font File !, error: %s\n"
+	);
 	
-	kernel_entry = (void (*)(BootInfo_t*))*KernelEnteryPoint;
-
-	BootInfo_t boot_info;
-
-	boot_info.mMap = memory_map;
-	boot_info.mMapSize = memory_map_size;
-	boot_info.mMapDescSize = descriptor_size;
-
-	EFI_CONFIGURATION_TABLE* configTable = SystemTable->ConfigurationTable;
-	void* rsdp; 
-	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;
-
-	for (UINTN index = 0; index < SystemTable->NumberOfTableEntries; index++){
-		if (CompareGuid(&configTable[index].VendorGuid, &Acpi2TableGuid)){
-			if (m_strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8)){
-				rsdp = (void*)configTable->VendorTable;
-				//break;
-			}
-		}
-		configTable++;
-	}
-
-	boot_info.rsdp = rsdp;
-
-	Framebuffer* framebuffer = NULL;
-
-	framebuffer->BaseAddress = (void*)get_gop_protocol()->Mode->FrameBufferBase;
-	framebuffer->BufferSize  = get_gop_protocol()->Mode->FrameBufferSize;
-	framebuffer->Width = get_gop_protocol()->Mode->Info->HorizontalResolution;
-	framebuffer->Height = get_gop_protocol()->Mode->Info->VerticalResolution;
-	framebuffer->PixelsPerScanLine = get_gop_protocol()->Mode->Info->PixelsPerScanLine;
-
-	boot_info.framebuffer = framebuffer;
-	
-	PSF1_FONT defaultFont;
-
-	CHECKER(LoadFont(&defaultFont, ImageHandle, SystemTable), L"Error: Unable to Load Font FIle Image, error: %s\n\r");
-
-	boot_info.psf1_Font = &defaultFont;
-
-#if MAPPLE_DEBUG != 0
-	Print(L"Exting Booting Service into kernel...\n");
-#endif
-
-	// There is a status error but it works. so I will Probably re write this later
-	gBS->ExitBootServices(ImageHandle, memory_map_key);
-
-#if MAPPLE_DEBUG != 0
-	Print(L"Debug: Entring kernel\n");
-#endif
-
-	kernel_entry(&boot_info);
-#if MAPPLE_DEBUG != 0 
-	Print(L"Error: This Here means your kernel is faulty..\n\r");
-#endif
-
-    return EFI_SUCCESS;
+	return EFI_SUCCESS;
 };
