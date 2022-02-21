@@ -17,8 +17,8 @@ install:
 	sudo apt install -y gcc
 	sudo apt install -y g++
 	sudo apt install -y binutils
-	sudo apt install -y iat
 	sudo apt install -y mtools
+	sudo apt install -y nasm
 
 iso:
 	@rm -rf dist
