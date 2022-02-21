@@ -1,14 +1,8 @@
 #include <mapple/basicRenderer.h>
 
-BasicRenderer_t* GlobalRenderer;
-
-BasicRenderer_t* get_global_renderer(){
-    return GlobalRenderer;
-};
-
-void set_global_renderer(BasicRenderer_t _GlobalRenderer){
-    GlobalRenderer = &_GlobalRenderer;
-};
+/**
+ * @author https://github.com/Absurdponcho/
+ */
 
 BasicRenderer_t::BasicRenderer_t(Framebuffer_t* NewTargetFramebuffer, PSF1_FONT* NewPSF1Font)
 {
