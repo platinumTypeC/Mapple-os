@@ -18,3 +18,9 @@ EFI_STATUS say_efi_status(
 );
 
 #define CHECKER(expression, handleString) {EFI_STATUS result = expression;if (result != EFI_SUCCESS){ Print(L"Error: "handleString, get_efi_error_message(result) );return result; }}
+
+#if MAPPLE_DEBUG != 0
+	#define DebugPrint(...) Print(L"Debug: "__VA_ARGS__)
+#else
+	#define DebugPrint(...)
+#endif
