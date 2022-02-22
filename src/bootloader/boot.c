@@ -522,7 +522,11 @@ efi_main(
 		L"while Loding the kernel segments !, error: %s\n"
 	);
 
-	DebugPrint("Entering the kernel\n");
+	DebugPrint(L"Exiting Bootservices\n");
+
+	uefi_call_wrapper(m_ST->BootServices->ExitBootServices, 2, ImageHandle, gbootInfo.memoryMap.mMapKey);
+
+	DebugPrint(L"Entering the kernel\n");
 
 	void (*kernel_entry)(BootInfo*);
 	kernel_entry = (void (*)(BootInfo_t*))*kernel_entry_point;
