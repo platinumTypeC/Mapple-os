@@ -56,6 +56,7 @@ typedef struct
     uint64_t Y;
 } Point_t;
 
+#define Point Point_t
 #define BootInfo BootInfo_t
 #define MemoryInfo MemoryInfo_t
 #define Framebuffer Framebuffer_t
