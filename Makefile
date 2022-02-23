@@ -10,9 +10,6 @@ kernel:
 bootloader:
 	@make --no-print-directory -C src/bootloader
 
-linux: compile iso run
-wsl: compile iso runwsl
-
 install:
 	sudo apt install -y gcc
 	sudo apt install -y g++
@@ -20,7 +17,7 @@ install:
 	sudo apt install -y mtools
 	sudo apt install -y nasm
 
-iso:
+iso: compile
 	@rm -rf dist
 	@mkdir -p dist/EFI/Boot/
 	cp src/boot.efi dist/EFI/Boot/
@@ -35,7 +32,5 @@ clean:
 	@rm -rf $(shell find src -name "*.o") $(shell find src -name "*.so") $(shell find src -name "*.efi") $(shell find src -name "*.elf") $(shell find . -name '*.img')
 	@rm -rf dist/
 
-run:
-	qemu-system-x86_64 -drive file=Mapple.img,format=raw -m 200M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd"
-runwsl:
-	qemu-system-x86_64.exe -drive file=Mapple.img,format=raw -m 200M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="OVMFbin/OVMF_VARS-pure-efi.fd" 
+run: compile iso
+	$(shell bash ./run.sh)
