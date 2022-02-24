@@ -143,16 +143,28 @@ InitGOP(){
 			L"Cannot Query Video Mode !, error: %s\n"
 		);
 
-		DebugPrint(L"HorizontalResolution=%llu", mode_info->HorizontalResolution);
+		/*DebugPrint(L"Match Width: %d, Height: %d, Pixel Format: %d\n",
+			(mode_info->HorizontalResolution == TARGET_SCREEN_WIDTH) ? 1 : 0,
+			(mode_info->VerticalResolution == TARGET_SCREEN_HEIGHT) ? 1 : 0,
+			(mode_info->PixelFormat == PixelBlueGreenRedReserved8BitPerColor) ? 1 : 0);*/
 
 		if (mode_info->HorizontalResolution == TARGET_SCREEN_WIDTH &&
 			mode_info->VerticalResolution == TARGET_SCREEN_HEIGHT &&
-			mode_info->PixelFormat == PixelRedGreenBlueReserved8BitPerColor
+			mode_info->PixelFormat == PixelBlueGreenRedReserved8BitPerColor
 		){
 			videoMode = i;
 			break;
 		};
 	};
+
+	DebugPrint(L"Setting the Video Mode\n");
+
+	CHECKER(
+		uefi_call_wrapper(gGOPProtocol->SetMode, 2,
+			gGOPProtocol, videoMode)
+		,
+		L"Cannot Set Video Mode !, error:%s\n"
+	);
 
 	gbootInfo.frameBuffer.BaseAddress = gGOPProtocol->Mode->FrameBufferBase;
 	gbootInfo.frameBuffer.BufferSize = gGOPProtocol->Mode->FrameBufferSize;
@@ -559,7 +571,6 @@ efi_main(
 	);
 
 	EFI_FILE* kernelFile;
-
 	CHECKER(
 		OpenFile(KERNEL_EXECUTABLE_PATH, &kernelFile)
 		,
@@ -618,6 +629,5 @@ efi_main(
 
 	DebugPrint(L"This here should never be Reached\n");
 	DebugPrint(L"This also means that the kernel is faulty\n");
-
 	return EFI_SUCCESS;
 };
