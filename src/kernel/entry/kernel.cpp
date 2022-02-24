@@ -6,7 +6,7 @@
 extern "C" void kernel_main(
     BootInfo_t* boot_info
 ){
-    // testScene(boot_info->frameBuffer);
+    testScene(boot_info->frameBuffer);
 
     GDTDescriptor DescTableItem;
     DescTableItem.Size = sizeof(GDT) - 1;
