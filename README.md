@@ -15,5 +15,4 @@ To build the kernel you need:
 * qemu installed(put qemu on path if you using wsl).
 
 first run `make install` to install `gcc`, `binutils`, `mtools` and `nasm`(Note This only works if you are in a linux debian 
-distribution). then run `make linux`(`make wsl` for wsl) for compiling and runing using qemu, remember to put qemu on path if 
-you are using wsl.
+distribution). then run `make run` for compiling and runing using qemu, remember to put qemu on path if you are using wsl.
