@@ -17,6 +17,12 @@
 #include <mapple/types.h>
 #include <mapple/config.h>
 
+#define TEST_SCREEN_COL_NUM             4
+#define TEST_SCREEN_ROW_NUM             3
+#define TEST_SCREEN_TOTAL_TILES         TEST_SCREEN_COL_NUM * TEST_SCREEN_ROW_NUM
+#define TEST_SCREEN_PRIMARY_COLOUR      0x00FF4000
+#define TEST_SCREEN_SECONDARY_COLOUR    0x00FF80BF
+
 EFI_HANDLE m_IH;
 EFI_SYSTEM_TABLE* m_ST = NULL;
 EFI_FILE_PROTOCOL* RTFileSystem = NULL;
@@ -123,14 +129,87 @@ InitGOP(){
 		,
 		L"Error: Unable to locate GOP !, error: %s\n\r"
 	);
-	gbootInfo.frameBuffer->BaseAddress = (void*)gGOPProtocol->Mode->FrameBufferBase;
-	gbootInfo.frameBuffer->BufferSize = gGOPProtocol->Mode->FrameBufferSize;
-	gbootInfo.frameBuffer->Width = gGOPProtocol->Mode->Info->HorizontalResolution;
-	gbootInfo.frameBuffer->Height = gGOPProtocol->Mode->Info->VerticalResolution;
-	gbootInfo.frameBuffer->PixelsPerScanLine = gGOPProtocol->Mode->Info->PixelsPerScanLine;
+
+	DebugPrint(L"Choosing Video Mode\n");
+
+	UINT32 videoMode;
+	UINTN size_of_mode_info;
+	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* mode_info;
+	for (UINTN i = 0; i < gGOPProtocol->Mode->MaxMode; i++){
+		CHECKER(
+			uefi_call_wrapper(gGOPProtocol->QueryMode, 4, gGOPProtocol, 
+				i, &size_of_mode_info, &mode_info)
+			,
+			L"Cannot Query Video Mode !, error: %s\n"
+		);
+
+		DebugPrint(L"HorizontalResolution=%llu", mode_info->HorizontalResolution);
+
+		if (mode_info->HorizontalResolution == TARGET_SCREEN_WIDTH &&
+			mode_info->VerticalResolution == TARGET_SCREEN_HEIGHT &&
+			mode_info->PixelFormat == PixelRedGreenBlueReserved8BitPerColor
+		){
+			videoMode = i;
+			break;
+		};
+	};
+
+	gbootInfo.frameBuffer.BaseAddress = gGOPProtocol->Mode->FrameBufferBase;
+	gbootInfo.frameBuffer.BufferSize = gGOPProtocol->Mode->FrameBufferSize;
+	gbootInfo.frameBuffer.Width = gGOPProtocol->Mode->Info->HorizontalResolution;
+	gbootInfo.frameBuffer.Height = gGOPProtocol->Mode->Info->VerticalResolution;
+	gbootInfo.frameBuffer.PixelsPerScanLine = gGOPProtocol->Mode->Info->PixelsPerScanLine;
 
 	return EFI_SUCCESS;
 };
+
+VOID draw_rect(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol,
+	IN const UINT16 _x,
+	IN const UINT16 _y,
+	IN const UINT16 width,
+	IN const UINT16 height,
+	IN const UINT32 color)
+{
+	/** Pointer to the current pixel in the buffer. */
+	UINT32* at;
+
+	UINT16 row = 0;
+	UINT16 col = 0;
+	for(row = 0; row < height; row++) {
+		for(col = 0; col < width; col++) {
+			at = (UINT32*)protocol->Mode->FrameBufferBase + _x + col;
+			at += ((_y + row) * protocol->Mode->Info->HorizontalResolution);
+
+			*at = color;
+		}
+	}
+}
+
+
+/**
+ * draw_test_screen
+ */
+VOID draw_test_screen(IN EFI_GRAPHICS_OUTPUT_PROTOCOL* const protocol)
+{
+	const UINT16 tile_width = protocol->Mode->Info->HorizontalResolution /
+		TEST_SCREEN_COL_NUM;
+	const UINT16 tile_height = protocol->Mode->Info->VerticalResolution /
+		TEST_SCREEN_ROW_NUM;
+
+	UINT8 p = 0;
+	for(p = 0; p < TEST_SCREEN_TOTAL_TILES; p++) {
+		UINT8 _x = p % TEST_SCREEN_COL_NUM;
+		UINT8 _y = p / TEST_SCREEN_COL_NUM;
+
+		UINT32 color = TEST_SCREEN_PRIMARY_COLOUR;
+		if(((_y % 2) + _x) % 2) {
+			color = TEST_SCREEN_SECONDARY_COLOUR;
+		}
+
+		draw_rect(protocol, tile_width * _x, tile_height * _y,
+			tile_width, tile_height, color);
+	}
+}
 
 EFI_STATUS
 EFIAPI
@@ -259,7 +338,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 	UINTN zero_fill_count = 0;
 
 	#ifdef DEBUG
-		DebugPrint(L"Debug: Setting file pointer to segment "
+		DebugPrint(L"Setting file pointer to segment "
 			"offset '0x%llx'\n", segment_file_offset);
 	#endif
 
@@ -273,7 +352,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 	}
 
 	#ifdef DEBUG
-		DebugPrint(L"Debug: Allocating %lu pages at address '0x%llx'\n",
+		DebugPrint(L"Allocating %lu pages at address '0x%llx'\n",
 			segment_page_count, segment_virtual_address);
 	#endif
 
@@ -291,7 +370,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 		buffer_read_size = segment_file_size;
 
 		#ifdef DEBUG
-			DebugPrint(L"Debug: Allocating segment buffer with size '0x%llx'\n",
+			DebugPrint(L"Allocating segment buffer with size '0x%llx'\n",
 				buffer_read_size);
 		#endif
 
@@ -305,7 +384,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 		}
 
 		#ifdef DEBUG
-			DebugPrint(L"Debug: Reading segment data with file size '0x%llx'\n",
+			DebugPrint(L"Reading segment data with file size '0x%llx'\n",
 				buffer_read_size);
 		#endif
 
@@ -319,7 +398,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 		}
 
 		#ifdef DEBUG
-			DebugPrint(L"Debug: Copying segment to memory address '0x%llx'\n",
+			DebugPrint(L"Copying segment to memory address '0x%llx'\n",
 				segment_virtual_address);
 		#endif
 
@@ -333,7 +412,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 		}
 
 		#ifdef DEBUG
-			DebugPrint(L"Debug: Freeing program section data buffer\n");
+			DebugPrint(L"Freeing program section data buffer\n");
 		#endif
 
 		status = uefi_call_wrapper(gBS->FreePool, 1, program_data);
@@ -353,7 +432,7 @@ EFI_STATUS load_segment(IN EFI_FILE* const kernel_img_file,
 
 	if(zero_fill_count > 0) {
 		#ifdef DEBUG
-			DebugPrint(L"Debug: Zero-filling %llu bytes at address '0x%llx'\n",
+			DebugPrint(L"Zero-filling %llu bytes at address '0x%llx'\n",
 				zero_fill_count, zero_fill_start);
 		#endif
 
@@ -402,7 +481,7 @@ EFI_STATUS load_program_segments(IN EFI_FILE* const kernel_img_file,
 	}
 
 	#ifdef DEBUG
-		DebugPrint(L"Debug: Loading %u segments\n", n_program_headers);
+		DebugPrint(L"Loading %u segments\n", n_program_headers);
 	#endif
 
 
@@ -473,7 +552,11 @@ efi_main(
 	EFI_SYSTEM_TABLE* SystemTable
 ){
 	InitializeLib(ImageHandle, SystemTable);
-	InitailizeAllProtocols(ImageHandle, SystemTable);
+	CHECKER(
+		InitailizeAllProtocols(ImageHandle, SystemTable)
+		,
+		L"Unable to init all protocols !, error: %s\n"
+	);
 
 	EFI_FILE* kernelFile;
 
@@ -522,14 +605,14 @@ efi_main(
 		L"while Loding the kernel segments !, error: %s\n"
 	);
 
-	DebugPrint(L"Exiting Bootservices\n");
+	DebugPrint(L"Graphics vram %llu\n", gGOPProtocol->Mode->FrameBufferBase);
+	DebugPrint(L"Entering The Kernel\n");
 
 	uefi_call_wrapper(m_ST->BootServices->ExitBootServices, 2, ImageHandle, gbootInfo.memoryMap.mMapKey);
 
-	DebugPrint(L"Entering the kernel\n");
-
 	void (*kernel_entry)(BootInfo*);
 	kernel_entry = (void (*)(BootInfo_t*))*kernel_entry_point;
+
 
 	kernel_entry(&gbootInfo);
 
