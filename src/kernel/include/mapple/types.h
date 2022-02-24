@@ -26,7 +26,7 @@ typedef struct {
 } PSF1_FONT_t;
 
 typedef struct {
-	void* BaseAddress;
+	uint64_t BaseAddress;
 	uint64_t BufferSize;
 	uint64_t Width;
 	uint64_t Height;
@@ -44,7 +44,7 @@ typedef struct
 
 
 typedef struct {
-    Framebuffer_t* frameBuffer;
+    Framebuffer_t frameBuffer;
     PSF1_FONT_t defaultFont;
     MemoryInfo_t memoryMap;
     void* rsdp;
@@ -55,6 +55,15 @@ typedef struct
     uint64_t X;
     uint64_t Y;
 } Point_t;
+
+typedef struct
+{
+    uint32_t r;
+    uint32_t g;
+    uint32_t b;
+    uint32_t a;
+} Color_t;
+
 
 #define Point Point_t
 #define BootInfo BootInfo_t

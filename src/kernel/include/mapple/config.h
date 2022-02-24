@@ -6,28 +6,11 @@
 #pragma once
 
 /**
- * @brief This will display a test scene during the gop init phase
- * 
- */
-#define MAPPLE_TEST_SCENE_ONE 0
-
-/**
  * @brief Target screen parameters
  * 
  */
 #define TARGET_SCREEN_WIDTH 2048
 #define TARGET_SCREEN_HEIGHT 1536
-
-/**
- * @brief Test Screen Specifications you can edit easly to check the graphical
- * Capacities or just test that everthing is working as it should
- * 
- */
-#define TEST_SCREEN_COL_NUM             4
-#define TEST_SCREEN_ROW_NUM             3
-#define TEST_SCREEN_TOTAL_TILES         TEST_SCREEN_COL_NUM * TEST_SCREEN_ROW_NUM
-#define TEST_SCREEN_PRIMARY_COLOUR      0x00FF4000
-#define TEST_SCREEN_SECONDARY_COLOUR    0x00FF80BF
 
 #define KERNEL_EXECUTABLE_PATH L"\\kernel.elf"
 #define FONT_FILE_PATH L"\\zap-light16.psf"
