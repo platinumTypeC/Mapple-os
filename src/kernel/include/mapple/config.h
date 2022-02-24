@@ -9,8 +9,8 @@
  * @brief Target screen parameters
  * 
  */
-#define TARGET_SCREEN_WIDTH 2048
-#define TARGET_SCREEN_HEIGHT 1536
+#define TARGET_SCREEN_WIDTH 1024
+#define TARGET_SCREEN_HEIGHT 768
 
 #define KERNEL_EXECUTABLE_PATH L"\\kernel.elf"
 #define FONT_FILE_PATH L"\\zap-light16.psf"
