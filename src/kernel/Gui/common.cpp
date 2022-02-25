@@ -1,8 +1,6 @@
 #include <mapple/Gui/common.h>
+#include <mapple/config.h>
 #include <stddef.h>
-
-#define TEST_SCREEN_PRIMARY_COLOUR 0x00FF4000
-#define TEST_SCREEN_SECONDARY_COLOUR 0x00FF80BF
 
 void draw_rect(
     Framebuffer_t frameBuffer,
@@ -46,4 +44,15 @@ void testScene(
 
 		draw_rect(frameBuffer, tile_width * _x, tile_height * _y, tile_width, tile_height, color);
 	}
+};
+
+void clearScreen(
+	Framebuffer_t frameBuffer
+){
+	uint8_t _x = 0;
+	uint8_t _y = 0;
+
+	uint32_t color = CLEAR_SCREEN_COLOR;
+
+	draw_rect(frameBuffer, frameBuffer.Width * _x, frameBuffer.Height * _y, frameBuffer.Width, frameBuffer.Height, color);
 };
