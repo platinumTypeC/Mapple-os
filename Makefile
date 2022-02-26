@@ -17,6 +17,9 @@ install:
 	sudo apt install -y mtools
 	sudo apt install -y nasm
 
+fix:
+	$(shell bash ./fixOVMF.sh)
+
 iso: compile
 	@rm -rf dist
 	@mkdir -p dist/EFI/Boot/
