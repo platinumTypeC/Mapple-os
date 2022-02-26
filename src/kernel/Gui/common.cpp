@@ -1,4 +1,5 @@
 #include <mapple/Gui/common.h>
+#include <mapple/Maths.h>
 #include <mapple/config.h>
 #include <stddef.h>
 
@@ -27,6 +28,7 @@ void draw_rect(
 void testScene(
     Framebuffer_t frameBuffer
 ){
+
     uint16_t tile_width = frameBuffer.Width /
 		4;
     uint16_t tile_height = frameBuffer.Height /
