@@ -5,6 +5,25 @@
 #define PSF1_MAGIC1 0x04
 
 typedef struct {
+    uint8_t  CharB;
+    uint8_t  CharM;
+    uint32_t Size;
+    uint16_t Reserved[2];
+    uint32_t ImageOffset;
+    uint32_t HeaderSize;
+    uint32_t PixelWidth;
+    uint32_t PixelHeight;
+    uint16_t Planes;
+    uint16_t BitPerPixel;
+    uint32_t CompressionType;
+    uint32_t ImageSize;
+    uint32_t XPixelsPerMeter;
+    uint32_t YPixelsPerMeter;
+    uint32_t NumberOfColors;
+    uint32_t ImportantColors;
+} __attribute__((__packed__)) BMP_IMAGE_HEADER_t;
+
+typedef struct {
     uint32_t Type;
     uint32_t Pad;
     uint64_t PhysicalStart;
@@ -72,3 +91,4 @@ typedef struct
 #define PSF1_FONT PSF1_FONT_t
 #define PSF1_HEADER PSF1_HEADER_t
 #define EFI_MEMORY_DESCRIPTOR efi_memoryDescrupter_t
+#define BMP_IMAGE_HEADER BMP_IMAGE_HEADER_t
