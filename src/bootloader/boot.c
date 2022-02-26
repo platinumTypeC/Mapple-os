@@ -621,11 +621,12 @@ efi_main(
 
 	uefi_call_wrapper(m_ST->BootServices->ExitBootServices, 2, ImageHandle, gbootInfo.memoryMap.mMapKey);
 
-	void (*kernel_entry)(BootInfo*);
-	kernel_entry = (void (*)(BootInfo_t*))*kernel_entry_point;
+	UINT64 (*kernel_entry)(BootInfo_t*);
+	kernel_entry = (UINT64 (*)(BootInfo_t*))*kernel_entry_point;
+	
+	UINT64 a = kernel_entry(&gbootInfo);
 
-
-	kernel_entry(&gbootInfo);
+	DebugPrint(L"Kernel Exit Code was: %llu\n", a);
 
 	DebugPrint(L"This here should never be Reached\n");
 	DebugPrint(L"This also means that the kernel is faulty\n");
