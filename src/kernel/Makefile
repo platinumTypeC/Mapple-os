@@ -8,8 +8,8 @@ KERNEL_LDFLAGS  		 = -nostdlib -z max-page-size=0x1000
 
 KERNEL_LIBS    			:= -lgcc
 
-CFLAGS          		 = -Iinclude -fno-stack-protector -fpic \
-		  		  		   -fshort-wchar -mno-red-zone -Wall -fno-exceptions
+CFLAGS          		 =  -Iinclude -fno-stack-protector -fpic \
+		  		  		   	-fshort-wchar -mno-red-zone -Wall -fno-exceptions
 
 CC              		 = g++
 

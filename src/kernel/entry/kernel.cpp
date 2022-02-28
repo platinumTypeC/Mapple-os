@@ -14,8 +14,12 @@ extern "C" uint64_t kernel_main(
 
     LoadGDT(&DescTableItem);
 
-    DebugConsole console = DebugConsole(&boot_info->frameBuffer, &boot_info->defaultFont);
+    clearScreen(boot_info->frameBuffer);
 
-    // Error Code for induced exit
+    DebugConsole console = DebugConsole(&boot_info->frameBuffer, &boot_info->defaultFont);
+    console.Print("Print Service");
+    
+    asm("hlt");
+
     return 0;
 };
