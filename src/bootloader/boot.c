@@ -19,9 +19,10 @@
 
 #define TEST_SCREEN_COL_NUM             4
 #define TEST_SCREEN_ROW_NUM             3
-#define TEST_SCREEN_TOTAL_TILES         TEST_SCREEN_COL_NUM * TEST_SCREEN_ROW_NUM
-#define TEST_SCREEN_PRIMARY_COLOUR      0x00FF4000
-#define TEST_SCREEN_SECONDARY_COLOUR    0x00FF80BF
+#define TEST_SCREEN_TOTAL_TILES      TEST_SCREEN_COL_NUM * TEST_SCREEN_ROW_NUM
+
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
 
 EFI_HANDLE m_IH;
 EFI_SYSTEM_TABLE* m_ST = NULL;
@@ -83,13 +84,19 @@ LoadFont(){
 	PSF1_HEADER_t* fontHeader = (PSF1_HEADER_t*)AllocatePool(sizeof(PSF1_FONT_t));
 
 	UINTN size = sizeof(PSF1_HEADER_t);
-
 	CHECKER(
 		uefi_call_wrapper(FontFile->Read, 3, FontFile, 
 			&size, fontHeader)
 		,
 		L"Unable to Read FontFile !, error: %s\n"
 	);
+
+	if (fontHeader->magic[0] != PSF1_MAGIC0 || fontHeader->magic[1] != PSF1_MAGIC1){
+		Print(L"Error: Cannot verify font Magic Number\n");
+		DebugPrint("Number magic number is: %llu\n", fontHeader->magic);
+		DebugPrint("Size of header is: %llu\n", size);
+		return EFI_UNSUPPORTED;
+	}
 
 	UINTN glyphBufferSize = fontHeader->charsize * 256;
 	if (fontHeader->mode == 1) { //512 glyph mode
