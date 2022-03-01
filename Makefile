@@ -19,7 +19,7 @@ install:
 
 fix:
 	rm -rf OVMFbin/
-	git clone https://github.com/AbsurdPoncho/OVMFbin.git
+	git clone https://github.com/platinumTypeC/OVMFbin.git
 
 iso: compile
 	@rm -rf dist
