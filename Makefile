@@ -18,7 +18,8 @@ install:
 	sudo apt install -y nasm
 
 fix:
-	$(shell bash ./fixOVMF.sh)
+	rm -rf OVMFbin/
+	git clone https://github.com/AbsurdPoncho/OVMFbin.git
 
 iso: compile
 	@rm -rf dist
