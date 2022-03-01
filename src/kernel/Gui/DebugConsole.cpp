@@ -1,4 +1,5 @@
 #include <mapple/Gui.h>
+#include <mapple/cstr.h>
 
 DebugConsole::DebugConsole(Framebuffer_t* frmaebuffer, PSF1_FONT_t* NewPSF1Font){
     TargetFramebuffer = frmaebuffer;
@@ -19,30 +20,21 @@ void DebugConsole::PutChar(char Char, uint32_t XOffset, uint32_t YOffset) {
     }
 }
 
-void DebugConsole::Print(const char* str, uint64_t formatInt){ 
-    char* fmt = (char*)str;
-    while (*fmt != 0) {
-        PutChar(*fmt, CursorPosition.X, CursorPosition.Y);
-        CursorPosition.X += 8;
-        if (CursorPosition.X +8 > TargetFramebuffer->Width) {
-            CursorPosition.X = 0;
-            CursorPosition.Y += 16;
-        }
-        fmt++;
-    }    
-};
-
 void DebugConsole::Print(const char* str){
     char* fmt = (char*)str;
     while (*fmt != 0) {
+        if (*fmt == '\n'){
+            CursorPosition.X = 10;
+            CursorPosition.Y += 16;
+        }
         PutChar(*fmt, CursorPosition.X, CursorPosition.Y);
         CursorPosition.X += 8;
         if (CursorPosition.X +8 > TargetFramebuffer->Width) {
-            CursorPosition.X = 0;
+            CursorPosition.X = 10;
             CursorPosition.Y += 16;
         }
         fmt++;
-    }    
+    }
 };
 
 void DebugConsole::putPix(uint64_t X, uint64_t Y, uint64_t Color){
