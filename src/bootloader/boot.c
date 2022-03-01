@@ -630,9 +630,12 @@ efi_main(
 
 	UINT64 (*kernel_entry)(BootInfo_t*);
 	kernel_entry = (UINT64 (*)(BootInfo_t*))*kernel_entry_point;
-	
-	UINT64 a = kernel_entry(&gbootInfo);
 
+#if MAPPLE_DEBUG != 0	
+	UINT64 a = kernel_entry(&gbootInfo);
+#else
+	kernel_entry(&gbootInfo);
+#endif
 	DebugPrint(L"Kernel Exit Code was: %llu\n", a);
 
 	DebugPrint(L"This here should never be Reached\n");
