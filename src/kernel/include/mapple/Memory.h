@@ -4,4 +4,5 @@
 #include <mapple/Memory/PageFameAllocator.h>
 #include <mapple/types.h>
 
-void PrepareMemory(BootInfo_t* boot_info);
+uint64_t GetMemorySize(EFI_MEMORY_DESCRIPTOR* MemoryMapFirstDescriptor, uint64_t MemoryMapEntries, uint64_t MemoryMapDescriptorSize);
+void Memset(void* Start, uint8_t Value, uint64_t Num);
