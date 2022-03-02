@@ -58,3 +58,14 @@ void clearScreen(
 
 	draw_rect(frameBuffer, frameBuffer.Width * _x, frameBuffer.Height * _y, frameBuffer.Width, frameBuffer.Height, color);
 };
+
+void clearScreen(
+	Framebuffer_t* frameBuffer
+){
+	uint8_t _x = 0;
+	uint8_t _y = 0;
+
+	uint32_t color = CLEAR_SCREEN_COLOR;
+
+	draw_rect(*frameBuffer, frameBuffer->Width * _x, frameBuffer->Height * _y, frameBuffer->Width, frameBuffer->Height, color);
+};
