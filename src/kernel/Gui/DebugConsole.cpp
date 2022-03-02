@@ -24,12 +24,21 @@ void DebugConsole::Print(const char* str){
     char* fmt = (char*)str;
     while (*fmt != 0) {
         if (*fmt == '\n'){
+            if (CursorPosition.Y + 16 > TargetFramebuffer->Height ){
+                clearScreen(TargetFramebuffer);
+                CursorPosition.Y = 10;
+                CursorPosition.X = 10;
+            }
             CursorPosition.X = 10;
             CursorPosition.Y += 16;
         }
         PutChar(*fmt, CursorPosition.X, CursorPosition.Y);
         CursorPosition.X += 8;
         if (CursorPosition.X +8 > TargetFramebuffer->Width) {
+            // Temp Solution
+            if (CursorPosition.Y + 16 > TargetFramebuffer->Height ){
+                clearScreen(TargetFramebuffer);
+            }
             CursorPosition.X = 10;
             CursorPosition.Y += 16;
         }
