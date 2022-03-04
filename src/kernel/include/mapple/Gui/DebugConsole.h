@@ -10,7 +10,7 @@ class DebugConsole
         uint32_t Color;
         Point_t CursorPosition;
         
-        DebugConsole(Framebuffer_t* frmaebuffer, PSF1_FONT_t* NewPSF1Font);
+        DebugConsole(PSF1_FONT_t* NewPSF1Font);
         void Print(const char* str);
         void putPix(uint64_t X, uint64_t Y, uint64_t Color);
         void PutChar(char Char, unsigned int XOffset, unsigned int YOffset);

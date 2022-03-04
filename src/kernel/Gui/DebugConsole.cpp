@@ -1,8 +1,8 @@
 #include <mapple/Gui.h>
 #include <mapple/cstr.h>
 
-DebugConsole::DebugConsole(Framebuffer_t* frmaebuffer, PSF1_FONT_t* NewPSF1Font){
-    TargetFramebuffer = frmaebuffer;
+DebugConsole::DebugConsole(PSF1_FONT_t* NewPSF1Font){
+    TargetFramebuffer = GlobalFrameBuffer;
     PSF1Font = NewPSF1Font;
     Color = 0xffffffff;
     CursorPosition = {10, 10};
@@ -25,7 +25,7 @@ void DebugConsole::Print(const char* str){
     while (*fmt != 0) {
         if (*fmt == '\n'){
             if (CursorPosition.Y + 16 > TargetFramebuffer->Height ){
-                clearScreen(TargetFramebuffer);
+                clearScreen();
                 CursorPosition.Y = 10;
                 CursorPosition.X = 10;
             }
@@ -37,7 +37,7 @@ void DebugConsole::Print(const char* str){
         if (CursorPosition.X +8 > TargetFramebuffer->Width) {
             // Temp Solution
             if (CursorPosition.Y + 16 > TargetFramebuffer->Height ){
-                clearScreen(TargetFramebuffer);
+                clearScreen();
             }
             CursorPosition.X = 10;
             CursorPosition.Y += 16;
