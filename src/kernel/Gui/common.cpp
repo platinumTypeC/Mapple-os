@@ -1,10 +1,9 @@
 #include <mapple/Gui/common.h>
-#include <mapple/Maths.h>
 #include <mapple/config.h>
+#include <mapple/Memory.h>
 #include <stddef.h>
 
 void draw_rect(
-    Framebuffer_t frameBuffer,
     uint16_t _x,
     uint16_t _y,
     uint16_t width,
@@ -18,20 +17,18 @@ void draw_rect(
 	uint16_t col = 0;
 	for(row = 0; row < height; row++) {
 		for(col = 0; col < width; col++) {
-			at = (uint32_t*)frameBuffer.BaseAddress + _x + col;
-			at += ((_y + row) * frameBuffer.Width);
+			at = (uint32_t*)GlobalFrameBuffer->BaseAddress + _x + col;
+			at += ((_y + row) * GlobalFrameBuffer->Width);
 			*at = color;
 		}
 	}
 }
 
-void testScene(
-    Framebuffer_t frameBuffer
-){
+void testScene(){
 
-    uint16_t tile_width = frameBuffer.Width /
+    uint16_t tile_width = GlobalFrameBuffer->Width /
 		4;
-    uint16_t tile_height = frameBuffer.Height /
+    uint16_t tile_height = GlobalFrameBuffer->Height /
 		3;
 
 	uint8_t p = 0;
@@ -44,28 +41,10 @@ void testScene(
 			color = TEST_SCREEN_SECONDARY_COLOUR;
 		}
 
-		draw_rect(frameBuffer, tile_width * _x, tile_height * _y, tile_width, tile_height, color);
+		draw_rect(tile_width * _x, tile_height * _y, tile_width, tile_height, color);
 	}
 };
 
-void clearScreen(
-	Framebuffer_t frameBuffer
-){
-	uint8_t _x = 0;
-	uint8_t _y = 0;
-
-	uint32_t color = CLEAR_SCREEN_COLOR;
-
-	draw_rect(frameBuffer, frameBuffer.Width * _x, frameBuffer.Height * _y, frameBuffer.Width, frameBuffer.Height, color);
-};
-
-void clearScreen(
-	Framebuffer_t* frameBuffer
-){
-	uint8_t _x = 0;
-	uint8_t _y = 0;
-
-	uint32_t color = CLEAR_SCREEN_COLOR;
-
-	draw_rect(*frameBuffer, frameBuffer->Width * _x, frameBuffer->Height * _y, frameBuffer->Width, frameBuffer->Height, color);
+void clearScreen(){
+	Memset((void*)GlobalFrameBuffer->BaseAddress, 0, GlobalFrameBuffer->BufferSize);
 };

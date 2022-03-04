@@ -1,6 +1,5 @@
 #pragma once
-#include <mapple/types.h>
+#include <mapple/Gui.h>
 
-void testScene(Framebuffer_t frameBuffer);
-void clearScreen(Framebuffer_t frameBuffer);
-void clearScreen(Framebuffer_t* frameBuffer);
+void testScene();
+void clearScreen();
