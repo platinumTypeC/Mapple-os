@@ -38,3 +38,6 @@ clean:
 
 run: compile iso
 	$(shell bash ./run.sh)
+
+qemu:
+	$(shell bash ./run.sh)
