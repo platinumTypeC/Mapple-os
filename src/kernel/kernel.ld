@@ -8,7 +8,7 @@ ENTRY (kernel_main)
 SECTIONS
 {
 	. = KERNEL_PHYS_START;
-	kernel_start = .;
+	_KernelStart = .;
 
 	.text : ALIGN (4K)
 	{
@@ -36,5 +36,5 @@ SECTIONS
     stack_top = .;
 	}
 
-	kernel_end = .;
+	_KernelEnd = .;
 }

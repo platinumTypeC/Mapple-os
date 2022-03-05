@@ -74,6 +74,3 @@ extern const char* EFI_MEMORY_TYPE_STRINGS[];
 #define PSF1_HEADER PSF1_HEADER_t
 #define EFI_MEMORY_DESCRIPTOR efi_memoryDescrupter_t
 #define BMP_IMAGE_HEADER BMP_IMAGE_HEADER_t
-
-extern uint64_t kernel_start;
-extern uint64_t kernel_end;
