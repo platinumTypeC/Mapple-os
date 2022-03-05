@@ -67,6 +67,7 @@ void PrepareMemory(BootInfo_t* bootInfo){
     DebugPrint("Locked Frame Buffer Pages.\n");
 
     asm ("mov %0, %%cr3" : : "r" (PML4));
+    DebugPrint("Prepared Memory\n");
 }
 
 extern "C" uint64_t kernel_main(
