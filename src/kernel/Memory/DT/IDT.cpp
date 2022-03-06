@@ -1,4 +1,4 @@
-#include <mapple/Memory/IDT.h>
+#include <mapple/Interrupts.h>
 
 void IDTDescEntry::SetOffset(uint64_t Offset){
     Offset0 = (uint16_t)(Offset & 0x000000000000ffff);
