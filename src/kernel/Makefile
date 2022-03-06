@@ -9,13 +9,14 @@ KERNEL_LDFLAGS  		 = -nostdlib -z max-page-size=0x1000
 KERNEL_LIBS    			:= -lgcc
 
 CFLAGS          		 =  -Iinclude -fno-stack-protector -fpic \
-		  		  		   	-fshort-wchar -mno-red-zone -Wall -fno-exceptions \
-							-mgeneral-regs-only
-
+		  		  		   	-fshort-wchar -mno-red-zone -Wall -fno-exceptions
 CC              		 = g++
 
 all: ../kernel.elf
 	@echo done compiling kernel.
+
+Memory/DT/Interrupts.o: Memory/DT/Interrupts.cpp
+	${CC} ${CFLAGS} -mgeneral-regs-only -c $< -o $@
 
 %.o: %.cpp $(shell find . -name "*.h**")
 	${CC} ${CFLAGS} -c $< -o $@;
