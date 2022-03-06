@@ -13,12 +13,16 @@ void DebugConsole::PutChar(char Char, uint32_t XOffset, uint32_t YOffset) {
     for(unsigned long Y = YOffset; Y < YOffset+16; Y++) {
         for(unsigned long X = XOffset; X < XOffset+8; X++) {
             if ((*fontPtr & (0b10000000 >> (X - XOffset))) > 0){
-                putPix(X, Y, Color);
+                PutPix(X, Y, Color);
             }
         }
         fontPtr++;
     }
 }
+
+uint32_t DebugConsole::GetPix(uint64_t X, uint64_t Y){
+    return *(uint32_t*)((uint64_t)TargetFramebuffer->BaseAddress + (X*4) + (Y * TargetFramebuffer->PixelsPerScanLine * 4));
+};
 
 void DebugConsole::Print(const char* str){
     char* fmt = (char*)str;
@@ -46,6 +50,59 @@ void DebugConsole::Print(const char* str){
     }
 };
 
-void DebugConsole::putPix(uint64_t X, uint64_t Y, uint64_t Color){
+void DebugConsole::PutPix(uint64_t X, uint64_t Y, uint64_t Color){
     *(uint32_t*)((uint64_t)TargetFramebuffer->BaseAddress + (X*4) + (Y * TargetFramebuffer->PixelsPerScanLine * 4)) = Color;
 };
+
+void DebugConsole::ClearMouseCursor(uint8_t* MouseCursor, Point Position){
+    if (!MouseDrawn) return;
+
+    int XMax = 16;
+    int YMax = 16;
+    int DifferenceX = TargetFramebuffer->Width - Position.X;
+    int DifferenceY = TargetFramebuffer->Height - Position.Y;
+
+    if (DifferenceX < 16) XMax = DifferenceX;
+    if (DifferenceY < 16) YMax = DifferenceY;
+
+    for (int Y = 0; Y < YMax; Y++){
+        for (int X = 0; X < XMax; X++){
+            int Bit = Y * 16 + X;
+            int Byte = Bit / 8;
+            if ((MouseCursor[Byte] & (0b10000000 >> (X % 8))))
+            {
+                if (GetPix(Position.X + X, Position.Y + Y) == MouseCursorBufferAfter[X + Y *16]){
+                    PutPix(Position.X + X, Position.Y + Y, MouseCursorBuffer[X + Y * 16]);
+                }
+            }
+        }
+    }
+}
+
+void DebugConsole::DrawOverlayMouseCursor(uint8_t* MouseCursor, Point Position, uint32_t Colour){
+
+
+    int XMax = 16;
+    int YMax = 16;
+    int DifferenceX = TargetFramebuffer->Width - Position.X;
+    int DifferenceY = TargetFramebuffer->Height - Position.Y;
+
+    if (DifferenceX < 16) XMax = DifferenceX;
+    if (DifferenceY < 16) YMax = DifferenceY;
+
+    for (int Y = 0; Y < YMax; Y++){
+        for (int X = 0; X < XMax; X++){
+            int Bit = Y * 16 + X;
+            int Byte = Bit / 8;
+            if ((MouseCursor[Byte] & (0b10000000 >> (X % 8))))
+            {
+                MouseCursorBuffer[X + Y * 16] = GetPix(Position.X + X, Position.Y + Y);
+                PutPix(Position.X + X, Position.Y + Y, Colour);
+                MouseCursorBufferAfter[X + Y * 16] = GetPix(Position.X + X, Position.Y + Y);
+
+            }
+        }
+    }
+
+    MouseDrawn = true;
+}
