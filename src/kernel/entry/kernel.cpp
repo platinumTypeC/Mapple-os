@@ -23,6 +23,8 @@ void PrepareIDT(){
     GlobalIDTR->Offset = (uint64_t)GlobalAllocator->RequestPage();
 
     SetIDTGate((void*)PageFault_Handler, 0xE, IDT_TA_InterruptGate, 0x08);
+    
+    asm ("lidt %0" : : "m" (*GlobalIDTR));
 }
 
 extern "C" uint64_t kernel_main(
@@ -40,7 +42,7 @@ extern "C" uint64_t kernel_main(
     PrepareIDT();
 
     InitPS2Mouse();
-    
+
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
 
