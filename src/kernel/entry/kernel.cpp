@@ -4,6 +4,7 @@
 #include <mapple/config.h>
 #include <mapple/cstr.h>
 #include <mapple/Interrupts.h>
+#include <mapple/UserInput.h>
 #include <cstddef>
 
 DebugConsole* GloballConsole;
@@ -38,6 +39,8 @@ extern "C" uint64_t kernel_main(
 
     PrepareIDT();
 
+    InitPS2Mouse();
+    
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
 
