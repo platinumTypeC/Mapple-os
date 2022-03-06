@@ -4,5 +4,5 @@
 
 __attribute__((interrupt)) void PageFault_Handler(struct interrupt_frame* frame){
     GloballConsole->Print("Page fault detected");
-    while(true);
+    asm("hlt");
 }
