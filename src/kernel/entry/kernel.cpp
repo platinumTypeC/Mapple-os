@@ -10,6 +10,20 @@ DebugConsole* GloballConsole;
 Framebuffer_t* GlobalFrameBuffer;
 IDTR* GlobalIDTR;
 
+void SetIDTGate(void* Handler, uint8_t EntryOffset, uint8_t TypeAttributes, uint8_t Selector){
+    IDTDescEntry* Interrupt = (IDTDescEntry*)(GlobalIDTR->Offset + EntryOffset * sizeof(IDTDescEntry));
+    Interrupt->SetOffset((uint64_t)Handler);
+    Interrupt->TypeAttributes = TypeAttributes;
+    Interrupt->Selector = Selector;
+}
+
+void PrepareIDT(){
+    GlobalIDTR->Limit = 0x0FFF;
+    GlobalIDTR->Offset = (uint64_t)GlobalAllocator->RequestPage();
+
+    SetIDTGate((void*)PageFault_Handler, 0xE, IDT_TA_InterruptGate, 0x08);
+}
+
 extern "C" uint64_t kernel_main(
     BootInfo_t* boot_info
 ){
@@ -21,14 +35,8 @@ extern "C" uint64_t kernel_main(
     DebugPrint("Starting Initialization\n");
 
     PrepareMemory(boot_info);
-    
-    GlobalIDTR->Limit = 0x0FFF;
-    GlobalIDTR->Offset = (uint64_t)GlobalAllocator->RequestPage();
 
-    IDTDescEntry* int_PageFault = (IDTDescEntry*)(GlobalIDTR->Offset + 0xE * sizeof(IDTDescEntry));
-    int_PageFault->SetOffset((uint64_t)PageFault_Handler);
-    int_PageFault->TypeAttributes = IDT_TA_InterruptGate;
-    int_PageFault->Selector = 0x08;
+    PrepareIDT();
 
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
