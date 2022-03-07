@@ -1,6 +1,6 @@
 #include <mapple/Memory/Paging/PageTableManager.h>
-#include <mapple/Drivers/PCI.h>
-#include <mapple/Drivers/AHCI.h>
+#include <Drivers/PCI.h>
+#include <Drivers/AHCI.h>
 #include <mapple/Gui.h>
 #include <mapple/cstr.h>
 
