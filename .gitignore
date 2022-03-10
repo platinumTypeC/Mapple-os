@@ -8,3 +8,4 @@ src/kernel/*.o
 src/*.elf
 src/*.efi
 Session.vim
+compile_flags.txt
