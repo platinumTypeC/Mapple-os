@@ -5,7 +5,7 @@
 #include <mapple/cstr.h>
 #include <mapple/Interrupts.h>
 #include <mapple/UserInput.h>
-#include <mapple/scheduler.h>
+#include <mapple/schedular/scheduler.h>
 #include <cstddef>
 
 DebugConsole* GloballConsole;
