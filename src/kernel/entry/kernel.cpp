@@ -1,3 +1,4 @@
+#include <error.h>
 #include <mapple/types.h>
 #include <mapple/Memory.h>
 #include <mapple/Gui.h>
@@ -7,6 +8,7 @@
 #include <mapple/UserInput.h>
 #include <Drivers/ACPI.h>
 #include <Drivers/PCI.h>
+#include <EFIRT/time.h>
 #include <cstddef>
 
 DebugConsole* GloballConsole;
@@ -58,8 +60,14 @@ extern "C" uint64_t kernel_main(
     InitPS2Mouse();
 
     DebugPrint("Preparing ACPI\n");
+    
     PrepareACPI(boot_info);
+
     DebugPrint("Done Preparing ACPI\n");
+
+    DebugPrint("Time: ");
+    DebugPrint(to_string((uint64_t)getTime(boot_info).Hour));
+    DebugPrint("\n");
     
     DebugPrint("Done.. Haulting\n");
     asm("hlt");

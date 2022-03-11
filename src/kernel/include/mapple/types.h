@@ -1,17 +1,10 @@
 #pragma once
 #include <stdint.h>
+#include "../../../../include/efi.h"
 
 #define PSF1_MAGIC0 0x36
 #define PSF1_MAGIC1 0x04
-
-typedef struct {
-    uint32_t Type;
-    uint32_t Pad;
-    uint64_t PhysicalStart;
-    uint64_t VirtualStart;
-    uint64_t NumberOfPages;
-    uint64_t Attribute;
-} efi_memoryDescrupter_t;
+#define efi_memoryDescrupter_t EFI_MEMORY_DESCRIPTOR
 
 typedef struct {
 	uint8_t magic[2];
@@ -42,12 +35,12 @@ typedef struct
     uint64_t descSize;
 } MemoryInfo_t;
 
-
 typedef struct {
     Framebuffer_t frameBuffer;
     PSF1_FONT_t defaultFont;
     MemoryInfo_t memoryMap;
     void* rsdp;
+    EFI_RUNTIME_SERVICES* RT;
 } BootInfo_t;
 
 typedef struct
@@ -72,5 +65,4 @@ extern const char* EFI_MEMORY_TYPE_STRINGS[];
 #define Framebuffer Framebuffer_t
 #define PSF1_FONT PSF1_FONT_t
 #define PSF1_HEADER PSF1_HEADER_t
-#define EFI_MEMORY_DESCRIPTOR efi_memoryDescrupter_t
 #define BMP_IMAGE_HEADER BMP_IMAGE_HEADER_t
