@@ -14,8 +14,57 @@
 #include <efiapi.h>
 #include "include/elf.h"
 #include "include/error.h"
-#include <mapple/types.h>
 #include <mapple/config.h>
+
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
+
+typedef struct {
+	uint8_t magic[2];
+	uint8_t mode;
+	uint8_t charsize;
+} PSF1_HEADER_t;
+
+
+typedef struct {
+    PSF1_HEADER_t* psf1_Header;
+    void* glyphBuffer;
+} PSF1_FONT_t;
+
+typedef struct {
+	uint64_t BaseAddress;
+	uint64_t BufferSize;
+	uint64_t Width;
+	uint64_t Height;
+	uint64_t PixelsPerScanLine;
+} Framebuffer_t;
+
+typedef struct
+{
+    EFI_MEMORY_DESCRIPTOR* mMap;
+    uint64_t mMapSize;
+    uint64_t mMapKey;
+    uint32_t descVersion;
+    uint64_t descSize;
+} MemoryInfo_t;
+
+
+typedef struct {
+    Framebuffer_t frameBuffer;
+    PSF1_FONT_t defaultFont;
+    MemoryInfo_t memoryMap;
+    void* rsdp;
+} BootInfo_t;
+
+extern const char* EFI_MEMORY_TYPE_STRINGS[];
+
+#define Point Point_t
+#define BootInfo BootInfo_t
+#define MemoryInfo MemoryInfo_t
+#define Framebuffer Framebuffer_t
+#define PSF1_FONT PSF1_FONT_t
+#define PSF1_HEADER PSF1_HEADER_t
+#define BMP_IMAGE_HEADER BMP_IMAGE_HEADER_t
 
 #define TEST_SCREEN_COL_NUM             4
 #define TEST_SCREEN_ROW_NUM             3
@@ -25,10 +74,10 @@
 #define PSF1_MAGIC1 0x04
 
 EFI_HANDLE m_IH;
-EFI_SYSTEM_TABLE* m_ST = NULL;
-EFI_FILE_PROTOCOL* RTFileSystem = NULL;
-EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFsProtocol = NULL;
-EFI_GRAPHICS_OUTPUT_PROTOCOL* gGOPProtocol = NULL;
+EFI_SYSTEM_TABLE* m_ST = (EFI_SYSTEM_TABLE*)NULL;
+EFI_FILE_PROTOCOL* RTFileSystem = (EFI_FILE_PROTOCOL*)NULL;
+EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFsProtocol = (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*)NULL;
+EFI_GRAPHICS_OUTPUT_PROTOCOL* gGOPProtocol = (EFI_GRAPHICS_OUTPUT_PROTOCOL*)NULL;
 
 BootInfo_t gbootInfo;
 
