@@ -5,7 +5,8 @@
 #include <mapple/cstr.h>
 #include <mapple/Interrupts.h>
 #include <mapple/UserInput.h>
-#include <mapple/schedular/scheduler.h>
+#include <Drivers/ACPI.h>
+#include <Drivers/PCI.h>
 #include <cstddef>
 
 DebugConsole* GloballConsole;
@@ -28,6 +29,18 @@ void PrepareIDT(){
     asm ("lidt %0" : : "m" (*GlobalIDTR));
 }
 
+void PrepareACPI(BootInfo_t* boot_info){
+    ACPI::RSDP2* rsdp = (ACPI::RSDP2*)boot_info->rsdp;
+
+    ACPI::SDTHeader* xstd = (ACPI::SDTHeader*)rsdp->XSDTAddress;
+
+    DebugPrint("Finding MCFG from ACPI Table\n");
+
+    ACPI::MCFGHeader* mcfg = (ACPI::MCFGHeader*)ACPI::FindTable(xstd, (char*)"MCFG");
+    
+    PCI::EnumeratePCI(mcfg);
+}
+
 extern "C" uint64_t kernel_main(
     BootInfo_t* boot_info
 ){
@@ -43,9 +56,11 @@ extern "C" uint64_t kernel_main(
     PrepareIDT();
 
     InitPS2Mouse();
-    
-    InitializeShedular();
 
+    DebugPrint("Preparing ACPI\n");
+    PrepareACPI(boot_info);
+    DebugPrint("Done Preparing ACPI\n");
+    
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
 
