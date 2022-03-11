@@ -74,6 +74,7 @@ namespace PCI{
     }
 
     void EnumeratePCI(ACPI::MCFGHeader* mcfg){
+        DebugPrint("Enumerating PCI Buses\n");
         int entries = ((mcfg->Header.Length) - sizeof(ACPI::MCFGHeader)) / sizeof(ACPI::DeviceConfig);
         for (int t = 0; t < entries; t++){
             ACPI::DeviceConfig* newDeviceConfig = (ACPI::DeviceConfig*)((uint64_t)mcfg + sizeof(ACPI::MCFGHeader) + (sizeof(ACPI::DeviceConfig) * t));
