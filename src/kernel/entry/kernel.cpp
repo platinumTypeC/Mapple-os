@@ -1,4 +1,3 @@
-#include <error.h>
 #include <mapple/types.h>
 #include <mapple/Memory.h>
 #include <mapple/Gui.h>
