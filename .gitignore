@@ -2,10 +2,10 @@
 .vim
 dist/
 lib/
+**/*.img
 *.img
-src/bootloader/*.o
-src/kernel/*.o
-src/*.elf
-src/*.efi
+**/*.o
+**/*.elf
+**/*.efi
 Session.vim
 compile_flags.txt
