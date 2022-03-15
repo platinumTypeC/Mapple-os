@@ -1,13 +1,27 @@
+#include <mapple/Gui.h>
 #include <mapple/Memory.h>
-#include <mapple/Memory.h>
-
-PageTableManager* g_PageTableManager = NULL;
+#include <mapple/cstr.h>
 
 PageTableManager::PageTableManager(PageTable* PML4Address){
     this->PML4 = PML4Address;
 }
 
-void PageTableManager::MapMemory(void* virtualMemory, void* physicalMemory){
+void PageTableManager::MapMemory(void* virtualMemory, void* physicalMemory, uint64_t __TEST_VAL){
+
+    if (__TEST_VAL == 1){
+/*        DebugPrint("Virt: ");
+        DebugPrint(to_hstring((uint64_t)virtualMemory));
+        DebugPrint("\n");
+
+        DebugPrint("Physical: ");
+        DebugPrint(to_string((uint64_t)physicalMemory));
+        DebugPrint("\n");*/
+
+        DebugPrint("A Problem was incountered\n");
+
+        asm("hlt");
+    }
+
     PageMapIndexer indexer = PageMapIndexer((uint64_t)virtualMemory);
     PageDirectoryEntry PDE;
 

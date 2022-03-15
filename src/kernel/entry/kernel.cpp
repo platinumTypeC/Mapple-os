@@ -7,8 +7,8 @@
 #include <mapple/UserInput.h>
 #include <Drivers/ACPI.h>
 #include <Drivers/PCI.h>
-#include <EFIRT/time.h>
-#include <cstddef>
+#include <mapple/scheduling.h>
+#include <stddef.h>
 
 DebugConsole* GloballConsole;
 Framebuffer_t* GlobalFrameBuffer;
@@ -63,10 +63,11 @@ extern "C" uint64_t kernel_main(
     PrepareACPI(boot_info);
 
     DebugPrint("Done Preparing ACPI\n");
+    
 
-    DebugPrint("Time: ");
-    DebugPrint(to_string((uint64_t)getTime(boot_info).Hour));
-    DebugPrint("\n");
+    DebugPrint("Iniializing Heap\n");
+
+    InitializeHeap((void*)0x0000100000000000, 0x10);
     
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
