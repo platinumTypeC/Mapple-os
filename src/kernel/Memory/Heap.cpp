@@ -11,7 +11,6 @@ void InitializeHeap(void* HeapAddress, size_t PageCount){
     void* Position = HeapAddress;
 
     for (size_t i = 0; i < PageCount; i++){
-        DebugPrint("A 000000\n");
         GlobalPageTableManager->MapMemory(Position, GlobalAllocator->RequestPage(), 1);
         Position = (void*)((size_t)Position + 0x1000);
     }
