@@ -1,2 +1,2 @@
 #pragma once
-#include <mapple/scheduling/common.h>
+#include <mapple/scheduling/class.h>
