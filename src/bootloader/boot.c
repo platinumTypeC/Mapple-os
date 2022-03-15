@@ -54,7 +54,6 @@ typedef struct {
     PSF1_FONT_t defaultFont;
     MemoryInfo_t memoryMap;
     void* rsdp;
-    EFI_RUNTIME_SERVICES* RT;
 } BootInfo_t;
 
 extern const char* EFI_MEMORY_TYPE_STRINGS[];
@@ -681,8 +680,6 @@ efi_main(
 
 	UINT64 (*kernel_entry)(BootInfo_t*);
 	kernel_entry = (UINT64 (*)(BootInfo_t*))*kernel_entry_point;
-
-    gbootInfo.RT = RT;
 
 #if MAPPLE_DEBUG != 0	
 	UINT64 a = kernel_entry(&gbootInfo);
