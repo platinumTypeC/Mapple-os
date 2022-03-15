@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "../../../../include/efi.h"
 
 #define PSF1_MAGIC0 0x36
@@ -40,7 +39,6 @@ typedef struct {
     PSF1_FONT_t defaultFont;
     MemoryInfo_t memoryMap;
     void* rsdp;
-    EFI_RUNTIME_SERVICES* RT;
 } BootInfo_t;
 
 typedef struct
