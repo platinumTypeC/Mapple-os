@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <mapple/types.h>
 
 class PageMapIndexer {
     public:
