@@ -1,6 +1,6 @@
 #pragma once
+#include <mapple/types.h>
 
-#include <cstdint>
 
 class Proccess{
     uint64_t pid;
