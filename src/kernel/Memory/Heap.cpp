@@ -1,17 +1,22 @@
 #include <mapple/Memory/Heap.h>
 #include <mapple/Memory.h>
 #include <mapple/Gui.h>
+#include <mapple/cstr.h>
 
 void* HeapStart;
 void* HeapEnd;
 HeapSegHdr* LastHdr;
 
 void InitializeHeap(void* HeapAddress, size_t PageCount){
-    DebugPrint("InitialHeap start \n");
     void* Position = HeapAddress;
 
-    for (size_t i = 0; i < PageCount; i++){
-        GlobalPageTableManager->MapMemory(Position, GlobalAllocator->RequestPage(), 1);
+    for (uint64_t i = 0; i < (uint64_t)PageCount; i++){
+#if MAPPLE_DEBUG != 0
+        DebugPrint("Num: ");
+        DebugPrint(to_string((uint64_t)i));
+        DebugPrint("\n");
+#endif
+        GlobalPageTableManager->MapMemory(Position, GlobalAllocator->RequestPage());
         Position = (void*)((size_t)Position + 0x1000);
     }
 
@@ -21,8 +26,8 @@ void InitializeHeap(void* HeapAddress, size_t PageCount){
     HeapEnd = (void*)((size_t)HeapStart + HeapLength);
     HeapSegHdr* StartSegment = (HeapSegHdr*)HeapAddress;
     StartSegment->Length = HeapLength - sizeof(HeapSegHdr);
-    StartSegment->Next = NULL;
-    StartSegment->Last = NULL;
+    StartSegment->Next = 0;
+    StartSegment->Last = 0;
     StartSegment->IsFree = true;
     LastHdr = StartSegment;
 }
@@ -63,9 +68,9 @@ void* Malloc(size_t Size){
 }
 
 HeapSegHdr* HeapSegHdr::Split(size_t SplitLength){
-    if (SplitLength < 0x10) return NULL;
+    if (SplitLength < 0x10) return 0;
     int64_t SplitSegmentLength = Length - SplitLength - (sizeof(HeapSegHdr));
-    if (SplitSegmentLength < 0x10) return NULL;
+    if (SplitSegmentLength < 0x10) return 0;
 
     HeapSegHdr* NewSplitHdr = (HeapSegHdr*) ((size_t)this + SplitLength + sizeof(HeapSegHdr));
     Next->Last = NewSplitHdr; // Set the Next segment's Last segment to our new segment
@@ -98,7 +103,7 @@ void ExpandHeap(size_t Length){
     NewSegment->Last = LastHdr;
     LastHdr->Next = NewSegment;
     LastHdr = NewSegment;
-    NewSegment->Next = NULL;
+    NewSegment->Next = 0;
     NewSegment->Length = Length - sizeof(HeapSegHdr);
     NewSegment->CombineBackward();
 
