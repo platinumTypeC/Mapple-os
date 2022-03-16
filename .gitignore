@@ -5,6 +5,7 @@ lib/
 **/*.img
 *.img
 **/*.o
+**/*.so
 **/*.elf
 **/*.efi
 Session.vim
