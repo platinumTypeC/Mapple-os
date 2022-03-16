@@ -8,7 +8,6 @@
 #include <Drivers/ACPI.h>
 #include <Drivers/PCI.h>
 #include <mapple/scheduling.h>
-#include <stddef.h>
 
 DebugConsole* GloballConsole;
 Framebuffer_t* GlobalFrameBuffer;
@@ -68,6 +67,8 @@ extern "C" uint64_t kernel_main(
     DebugPrint("Iniializing Heap\n");
 
     InitializeHeap((void*)0x0000100000000000, 0x10);
+
+    DebugPrint("Initialized Heap");
     
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
