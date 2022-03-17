@@ -66,7 +66,6 @@ extern "C" uint64_t kernel_main(
 
     DebugPrint("Iniializing Heap\n");
 
-    InitializeHeap((void*)0x0000100000000000, 0x10);
 
     DebugPrint("Initialized Heap");
     
