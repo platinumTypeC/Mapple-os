@@ -1,6 +1,7 @@
 #pragma once
 #include <mapple/types.h>
 #include <mapple/config.h>
+#include <mapple/cstr.h>
 
 class DebugConsole
 {
@@ -26,6 +27,7 @@ extern DebugConsole* GloballConsole;
 
 #if MAPPLE_DEBUG != 0
     #define DebugPrint(...) GloballConsole->Print(__VA_ARGS__)
+    #define DebugPrintNum(...) GloballConsole->Print(to_string(__VA_ARGS__))
 #else
     #define DebugPrint(...)
 #endif
