@@ -67,7 +67,7 @@ extern "C" uint64_t kernel_main(
     DebugPrint("Iniializing Heap\n");
 
 
-    DebugPrint("Initialized Heap");
+    DebugPrint("Initialized Heap\n");
     
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
