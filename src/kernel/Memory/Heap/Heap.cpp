@@ -1,142 +1,140 @@
 #include <mapple/Memory.h>
-#include <mapple/Memory/Heapimpl.h>
 
-uint64_t offset = 8;
+#define align_up(num, align) (((num) + ((align)-1)) & ~((align)-1))
+#define ALLOC_HEADER_SZ offsetof(alloc_node_t, block)
 
-void init_heap(heap_t *heap, uint64_t start) {
-    node_t *init_region = (node_t *) start;
-    init_region->hole = 1;
-    init_region->size = (HEAP_INIT_SIZE) - sizeof(node_t) - sizeof(footer_t);
+// We are enforcing a minimum allocation size of 32B.
+#define MIN_ALLOC_SZ ALLOC_HEADER_SZ + 32
 
-    create_foot(init_region);
+typedef struct
+{
+	ll_t node;
+	size_t size;
+	char* block;
+} alloc_node_t;
 
-    add_node(heap->bins[get_bin_index(init_region->size)], init_region);
-
-    heap->start = start;
-    heap->end   = (start + HEAP_INIT_SIZE);
+__attribute__((weak)) void malloc_lock()
+{
+	// Intentional no-op
 }
 
-void *heap_alloc(heap_t *heap, size_t size) {
-    uint64_t index = get_bin_index(size);
-    bin_t *temp = (bin_t *) heap->bins[index];
-    node_t *found = get_best_fit(temp, size);
+__attribute__((weak)) void malloc_unlock()
+{
+	// Intentional no-op
+}
 
-    while (found == nullptr) {
-        if (index + 1 >= BIN_COUNT)
-            return nullptr;
+static LIST_INIT(free_list);
 
-        temp = heap->bins[++index];
-        found = get_best_fit(temp, size);
-    }
+#define MEM_BLOCK_SIZE (1024 * 1024)
+static uint8_t mem_block[MEM_BLOCK_SIZE];
 
-    if ((found->size - size) > (overhead + MIN_ALLOC_SZ)) {
-        node_t *split = (node_t *) (((char *) found + sizeof(node_t) + sizeof(footer_t)) + size);
-        split->size = found->size - size - sizeof(node_t) - sizeof(footer_t);
-        split->hole = 1;
-   
-        create_foot(split);
+void malloc_addblock(void* addr, size_t size)
+{
+	// let's align the start address of our block to the next pointer aligned number
+	alloc_node_t* new_memory_block = (alloc_node_t*)align_up((uintptr_t)addr, sizeof(void*));
 
-        uint64_t new_idx = get_bin_index(split->size);
+	// calculate actual size - remove our alignment and our header space from the availability
+	new_memory_block->size = (uintptr_t)addr + size - (uintptr_t)new_memory_block - ALLOC_HEADER_SZ;
 
-        add_node(heap->bins[new_idx], split); 
+	// and now our giant block of memory is added to the list!
+	malloc_lock();
+	list_add(&new_memory_block->node, &free_list);
+	malloc_unlock();
+}
 
-        found->size = size; 
-        create_foot(found); 
-    }
+void init_malloc()
+{
+    malloc_addblock(mem_block, MEM_BLOCK_SIZE);
+}
 
-    found->hole = 0; 
-    remove_node(heap->bins[index], found); 
-    
-    node_t *wild = get_wilderness(heap);
-    if (wild->size < MIN_WILDERNESS) {
-        uint64_t success = expand(heap, 0x1000);
-        if (success == 0) {
-            return nullptr;
+void* malloc(size_t size){
+    void* ptr = NULL;
+    alloc_node_t* blk = NULL;
+
+	if(size > 0)
+	{
+		// Align the pointer
+		size = align_up(size, sizeof(void*));
+
+        malloc_lock();
+
+        // iterate over every entry
+        list_for_each_entry(blk, &free_list, node)
+        {
+            if (blk->size >= size)
+            {
+                ptr = &blk->block;
+                break;
+            }
         }
+
+        // can we split it?
+        if(ptr)
+            {
+			// Can we split the block?
+			if((blk->size - size) >= MIN_ALLOC_SZ)
+			{
+				alloc_node_t* new_blk = (alloc_node_t*)((uintptr_t)(&blk->block) + size);
+				new_blk->size = blk->size - size - ALLOC_HEADER_SZ;
+				blk->size = size;
+				list_insert(&new_blk->node, &blk->node, blk->node.next);
+			}
+
+			list_del(&blk->node);
+		}
+
+		malloc_unlock();
     }
-    else if (wild->size > MAX_WILDERNESS) {
-        contract(heap, 0x1000);
-    }
-
-    found->prev = nullptr;
-    found->next = nullptr;
-    return &found->next; 
+    return ptr;
 }
 
-void heap_free(heap_t *heap, void *p) {
-    bin_t *list;
-    footer_t *new_foot, *old_foot;
+void defrag_free_list(void)
+{
+	alloc_node_t* block = NULL;
+	alloc_node_t* last_block = NULL;
+	alloc_node_t* temp = NULL;
 
-    node_t *head = (node_t *) ((char *) p - offset);
-    if (head == (node_t *)heap->start) {
-        head->hole = 1; 
-        add_node(heap->bins[get_bin_index(head->size)], head);
-        return;
-    }
-
-    node_t *next = (node_t *) ((char *) get_foot(head) + sizeof(footer_t));
-    footer_t *f = (footer_t *) ((char *) head - sizeof(footer_t));
-    node_t *prev = f->header;
-    
-    if (prev->hole) {
-        list = heap->bins[get_bin_index(prev->size)];
-        remove_node(list, prev);
-
-        prev->size += overhead + head->size;
-        new_foot = get_foot(head);
-        new_foot->header = prev;
-
-        head = prev;
-    }
-
-    if (next->hole) {
-        list = heap->bins[get_bin_index(next->size)];
-        remove_node(list, next);
-
-        head->size += overhead + next->size;
-
-        old_foot = get_foot(next);
-        old_foot->header = 0;
-        next->size = 0;
-        next->hole = 0;
-        
-        new_foot = get_foot(head);
-        new_foot->header = head;
-    }
-
-    head->hole = 1;
-    add_node(heap->bins[get_bin_index(head->size)], head);
+	list_for_each_entry_safe(block, temp, &free_list, node)
+	{
+		if(last_block)
+		{
+			if((((uintptr_t)&last_block->block) + last_block->size) == (uintptr_t)block)
+			{
+				last_block->size += ALLOC_HEADER_SZ + block->size;
+				list_del(&block->node);
+				continue;
+			}
+		}
+		last_block = block;
+	}
 }
 
-uint64_t expand(heap_t *heap, size_t sz) {
-    return 0;
-}
+void free(void* ptr)
+{
+	// Don't free a NULL pointer..
+	if(ptr)
+	{
+		// we take the pointer and use container_of to get the corresponding alloc block
+		alloc_node_t* current_block = container_of((char* const*)ptr, alloc_node_t, block);
+		alloc_node_t* free_block = NULL;
 
-void contract(heap_t *heap, size_t sz) {
-    return;
-}
+		malloc_lock();
 
-uint64_t get_bin_index(size_t sz) {
-    uint64_t index = 0;
-    sz = sz < 4 ? 4 : sz;
+		// Let's put it back in the proper spot
+		list_for_each_entry(free_block, &free_list, node)
+		{
+			if(free_block > current_block)
+			{
+				list_insert(&current_block->node, free_block->node.prev, &free_block->node);
+				goto blockadded;
+			}
+		}
+		list_add_tail(&current_block->node, &free_list);
 
-    while (sz >>= 1) index++; 
-    index -= 2; 
-    
-    if (index > BIN_MAX_IDX) index = BIN_MAX_IDX; 
-    return index;
-}
+	blockadded:
+		// Let's see if we can combine any memory
+		defrag_free_list();
 
-void create_foot(node_t *head) {
-    footer_t *foot = get_foot(head);
-    foot->header = head;
-}
-
-footer_t *get_foot(node_t *node) {
-    return (footer_t *) ((char *) node + sizeof(node_t) + node->size);
-}
-
-node_t *get_wilderness(heap_t *heap) {
-    footer_t *wild_foot = (footer_t *) ((char *) heap->end - sizeof(footer_t));
-    return wild_foot->header;
+		malloc_unlock();
+	}
 }
