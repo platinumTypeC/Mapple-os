@@ -1,3 +1,4 @@
+#define NO_LL
 #include <mapple/types.h>
 #include <mapple/Gui.h>
 #include <mapple/Interrupts.h>
