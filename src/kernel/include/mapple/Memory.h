@@ -2,7 +2,6 @@
 #include <mapple/Memory/Paging/Paging.h>
 #include <mapple/Memory/GDT.h>
 #include <mapple/Memory/Heap.h>
-#include <mapple/Memory/list.h>
 #include <mapple/types.h>
 
 void PrepareMemory(BootInfo_t* bootInfo);
