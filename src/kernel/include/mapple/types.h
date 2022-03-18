@@ -1,10 +1,24 @@
 #pragma once
-#include "../../../bootloader/efinclude/efi.h"
 #include <stddef.h>
+
+#ifdef NO_LL
+#include <stdint.h>
+#else
+#include <mapple/types/linkedList.h>
+#endif
 
 #define PSF1_MAGIC0 0x36
 #define PSF1_MAGIC1 0x04
-#define efi_memoryDescrupter_t EFI_MEMORY_DESCRIPTOR
+#define EFI_MEMORY_DESCRIPTOR efi_memoryDescrupter_t
+
+typedef struct {
+    uint32_t Type;           // Field size is 32 bits followed by 32 bit pad
+    uint32_t Pad;
+    uint64_t PhysicalStart;  // Field size is 64 bits
+    uint64_t VirtualStart;   // Field size is 64 bits
+    uint64_t NumberOfPages;  // Field size is 64 bits
+    uint64_t Attribute;      // Field size is 64 bits
+} EFI_MEMORY_DESCRIPTOR;
 
 typedef struct {
 	uint8_t magic[2];
