@@ -62,12 +62,35 @@ extern "C" uint64_t kernel_main(
     PrepareACPI(boot_info);
 
     DebugPrint("Done Preparing ACPI\n");
-    
 
-    DebugPrint("Iniializing Heap\n");
+    DebugPrint("Initializing Malloc \n");
 
+    init_malloc();
 
-    DebugPrint("Initialized Heap\n");
+    DebugPrint("Initialized Malloc \n");
+
+    DebugPrint("Starting Malloc test\n");
+
+    uint8_t n = 5;
+
+    uint64_t* ptr = (uint64_t*)malloc(n * sizeof(uint64_t));
+
+    if (ptr == NULL){
+        DebugPrint("Memory alloc failed!\n");
+    } else {
+        DebugPrint("Memory Allocated Succesfully !!!\n");
+
+        for (uint8_t i = 0; i < n; ++i)
+        {
+            ptr[i] = i + 1;
+        };
+
+        DebugPrint("Ptr: ");
+        DebugPrintNum(ptr[2]);
+        DebugPrint("\n");
+    }
+
+    DebugPrint("Finished Malloc test\n");
     
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
