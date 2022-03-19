@@ -1,1 +1,6 @@
-#include <mapple/scheduling/Proccess.h>
+#include <mapple/scheduling/class.h>
+
+
+void Scheduler::addProcess(Proccess process)
+{
+}
