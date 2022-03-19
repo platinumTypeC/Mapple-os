@@ -25,8 +25,15 @@ void PrepareIDT(){
     GlobalIDTR->Offset = (uint64_t)GlobalAllocator->RequestPage();
 
     SetIDTGate((void*)PageFault_Handler, 0xE, IDT_TA_InterruptGate, 0x08);
-    
+    SetIDTGate((void*)DoubleFault_Handler, 0x8, IDT_TA_InterruptGate, 0x08);
+    SetIDTGate((void*)GPFault_Handler, 0xD, IDT_TA_InterruptGate, 0x08);
+    SetIDTGate((void*)KeyboardInt_Handler, 0x21, IDT_TA_InterruptGate, 0x08);
+    SetIDTGate((void*)MouseInt_Handler, 0x2C, IDT_TA_InterruptGate, 0x08);
+    SetIDTGate((void*)PITInt_Handler, 0x20, IDT_TA_InterruptGate, 0x08);   
+
     asm ("lidt %0" : : "m" (*GlobalIDTR));
+
+    RemapPIC();
 }
 
 void PrepareACPI(BootInfo_t* boot_info){
@@ -86,12 +93,15 @@ extern "C" uint64_t kernel_main(
         };
 
         DebugPrint("Ptr: ");
-        DebugPrintNum(ptr[2]);
+        DebugPrintNum(ptr[0]);
         DebugPrint("\n");
     }
 
+    free(ptr);
+
+    DebugPrint("Pointer Freed\n");
     DebugPrint("Finished Malloc test\n");
-    
+
     DebugPrint("Done.. Haulting\n");
     asm("hlt");
 
