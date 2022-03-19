@@ -106,3 +106,32 @@ void DebugConsole::DrawOverlayMouseCursor(uint8_t* MouseCursor, Point Position, 
 
     MouseDrawn = true;
 }
+
+
+void DebugConsole::ClearChar(){
+
+    if (CursorPosition.X == 0){
+        CursorPosition.X = TargetFramebuffer->Width;
+        CursorPosition.Y -= 16;
+        if (CursorPosition.Y < 0) CursorPosition.Y = 0;
+    }
+
+    unsigned int xOff = CursorPosition.X;
+    unsigned int yOff = CursorPosition.Y;
+
+    unsigned int* pixPtr = (unsigned int*)TargetFramebuffer->BaseAddress;
+    for (unsigned long y = yOff; y < yOff + 16; y++){
+        for (unsigned long x = xOff - 8; x < xOff; x++){
+            *(unsigned int*)(pixPtr + x + (y * TargetFramebuffer->PixelsPerScanLine)) = ClearColor;
+        }
+    }
+
+    CursorPosition.X -= 8;
+
+    if (CursorPosition.X < 0){
+        CursorPosition.X = TargetFramebuffer->Width;
+        CursorPosition.Y -= 16;
+        if (CursorPosition.Y < 0) CursorPosition.Y = 0;
+    }
+
+}
