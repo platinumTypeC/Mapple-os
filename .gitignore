@@ -8,5 +8,6 @@ lib/
 **/*.so
 **/*.elf
 **/*.efi
-Session.vim
+*.vim
+**/*.vim
 compile_flags.txt
