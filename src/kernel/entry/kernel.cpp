@@ -8,6 +8,7 @@
 #include <Drivers/ACPI.h>
 #include <Drivers/PCI.h>
 #include <mapple/scheduling.h>
+#include <mapple/IO.h>
 
 DebugConsole* GloballConsole;
 Framebuffer_t* GlobalFrameBuffer;
@@ -68,6 +69,11 @@ extern "C" uint64_t kernel_main(
     
     PrepareACPI(boot_info);
 
+    OutByte(PIC1_DATA, 0b11111000);
+    OutByte(PIC2_DATA, 0b11101111);
+
+    asm("sti");
+
     DebugPrint("Done Preparing ACPI\n");
 
     DebugPrint("Initializing Malloc \n");
@@ -95,15 +101,20 @@ extern "C" uint64_t kernel_main(
         DebugPrint("Ptr: ");
         DebugPrintNum(ptr[0]);
         DebugPrint("\n");
-    }
 
-    free(ptr);
+        free(ptr);
+    }
 
     DebugPrint("Pointer Freed\n");
     DebugPrint("Finished Malloc test\n");
 
+    DebugPrint("Time Since Boot: ");
+    DebugPrintNum(PIT::TimeSinceBoot);
+    DebugPrint("\n");
+
     DebugPrint("Done.. Haulting\n");
-    asm("hlt");
+
+    while(true);
 
     return 0;
 };
