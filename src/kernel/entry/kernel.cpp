@@ -101,7 +101,9 @@ extern "C" uint64_t kernel_main(
     DebugPrintNum(PIT::TimeSinceBoot);
     DebugPrint("\n");
 
-    // DebugPrint("Statred Scheduling for multTasking\n");
+    Scheduler::addProcess((void*)0x100000); // TODO: Load a test binary here
+
+    DebugPrint("Started Scheduling for multTasking\n");
     DebugPrint("Done.. Haulting\n");
 
     while(true);
