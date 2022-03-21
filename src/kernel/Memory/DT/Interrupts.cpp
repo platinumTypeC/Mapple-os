@@ -4,7 +4,7 @@
 #include <mapple/Interrupts.h>
 #include <mapple/IO.h>
 #include <mapple/UserInput.h>
-#include <mapple/scheduling.h>
+#include <mapple/scheduling/PIT.h>
 
 __attribute__((interrupt)) void PageFault_Handler(struct interrupt_frame* frame){
     GloballConsole->Print("Page fault detected");
