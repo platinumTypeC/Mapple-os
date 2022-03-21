@@ -1,6 +1,5 @@
 #include <mapple/Memory.h>
 
-#define align_up(num, align) (((num) + ((align)-1)) & ~((align)-1))
 #define ALLOC_HEADER_SZ offsetof(alloc_node_t, block)
 
 // We are enforcing a minimum allocation size of 32B.
@@ -25,8 +24,8 @@ __attribute__((weak)) void malloc_unlock()
 
 static LIST_INIT(free_list);
 
-#define MEM_BLOCK_SIZE (1024 * 1024)
-static uint8_t mem_block[MEM_BLOCK_SIZE];
+#define MEM_BLOCK_SIZE (4096)
+static uint8_t mem_block[10];
 
 void malloc_addblock(void* addr, size_t size)
 {
@@ -44,7 +43,10 @@ void malloc_addblock(void* addr, size_t size)
 
 void init_malloc()
 {
-    malloc_addblock(mem_block, MEM_BLOCK_SIZE);
+    for (uint8_t i = 0; i < 10; i++){
+        void* addr = (void*)(((uint64_t*)mem_block) + (i * MEM_BLOCK_SIZE));
+        malloc_addblock(addr, MEM_BLOCK_SIZE);
+    }
 }
 
 void* malloc(size_t size){
