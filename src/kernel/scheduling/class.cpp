@@ -3,23 +3,26 @@
 #include <mapple/Gui.h>
 
 namespace Scheduler {
-    namespace 
-    {
-        LIST_INIT(TopStack);
-        LIST_INIT(MiddleStack);
-        LIST_INIT(BottomStack);
-        LIST_INIT(WaitingStack);
-    }
+    LIST_INIT(Stack);
 
-    void addProcess(uint8_t pid)
+    uint16_t pidCounter = 0;
+
+    void addProcess(void* start)
     {
         Proccess process;
-        process.pid = pid;
+        process.pid = pidCounter++;
+        process.importance = 1; // 0 is waiting, 1 is top, 2 is middle, 3 is bottom
+        process.isWaiting = 0;
+        process.start = start;
 
-        list_add(&process.node, &TopStack);
+        list_add(&process.node, &Stack);
     };
 
-    void removeProcess(uint8_t pid)
+    void removeProcess(uint16_t pid)
     {
+        Proccess* proc = NULL;
+        list_for_each_entry(proc, &Stack, node){
+            DebugPrint("List\n");
+        };
     };
 }
