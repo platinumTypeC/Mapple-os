@@ -32,4 +32,5 @@ extern DebugConsole* GloballConsole;
     #define DebugPrintNum(...) GloballConsole->Print(to_string(__VA_ARGS__))
 #else
     #define DebugPrint(...)
+    #define DebugPrintNum(...) 
 #endif
