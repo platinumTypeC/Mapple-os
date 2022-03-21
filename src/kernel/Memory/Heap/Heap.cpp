@@ -24,8 +24,10 @@ __attribute__((weak)) void malloc_unlock()
 
 static LIST_INIT(free_list);
 
+#define MEM_BLOCK_NUMBER 10
+
 #define MEM_BLOCK_SIZE (4096)
-static uint8_t mem_block[10];
+static uint8_t mem_block[MEM_BLOCK_SIZE * MEM_BLOCK_NUMBER];
 
 void malloc_addblock(void* addr, size_t size)
 {
