@@ -79,3 +79,5 @@ extern const char* EFI_MEMORY_TYPE_STRINGS[];
 #define PSF1_FONT PSF1_FONT_t
 #define PSF1_HEADER PSF1_HEADER_t
 #define BMP_IMAGE_HEADER BMP_IMAGE_HEADER_t
+
+#define align_up(num, align) (((num) + ((align)-1)) & ~((align)-1))
