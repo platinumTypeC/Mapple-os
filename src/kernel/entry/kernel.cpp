@@ -49,6 +49,22 @@ void PrepareACPI(BootInfo_t* boot_info){
     PCI::EnumeratePCI(mcfg);
 }
 
+void MallocTest()
+{
+    for (uint8_t i = 0; i < 10; i++){
+        void* ptr = malloc(sizeof(int) * 16);
+        if (ptr != NULL)
+        {
+            free(ptr);
+        } else 
+        {
+            DebugPrint("Failed Test \n");
+            while (true);
+            return;
+        }
+    }
+};
+
 extern "C" uint64_t kernel_main(
     BootInfo_t* boot_info
 ){
@@ -57,15 +73,12 @@ extern "C" uint64_t kernel_main(
 
     DebugConsole console = DebugConsole(&boot_info->defaultFont);
     GloballConsole = &console;
-    DebugPrint("Starting Initialization\n");
 
     PrepareMemory(boot_info);
 
     PrepareIDT();
 
     InitPS2Mouse();
-
-    DebugPrint("Preparing ACPI\n");
     
     PrepareACPI(boot_info);
 
@@ -74,44 +87,21 @@ extern "C" uint64_t kernel_main(
 
     asm("sti");
 
-    DebugPrint("Done Preparing ACPI\n");
-
-    DebugPrint("Initializing Malloc \n");
+    DebugPrint("Done Prepared ACPI\n");
 
     init_malloc();
 
     DebugPrint("Initialized Malloc \n");
 
-    DebugPrint("Starting Malloc test\n");
+    MallocTest();
 
-    uint8_t n = 5;
-
-    uint64_t* ptr = (uint64_t*)malloc(n * sizeof(uint64_t));
-
-    if (ptr == NULL){
-        DebugPrint("Memory alloc failed!\n");
-    } else {
-        DebugPrint("Memory Allocated Succesfully !!!\n");
-
-        for (uint8_t i = 0; i < n; ++i)
-        {
-            ptr[i] = i + 1;
-        };
-
-        DebugPrint("Ptr: ");
-        DebugPrintNum(ptr[0]);
-        DebugPrint("\n");
-
-        free(ptr);
-    }
-
-    DebugPrint("Pointer Freed\n");
-    DebugPrint("Finished Malloc test\n");
+    DebugPrint("Successfully Passed Malloc test\n");
 
     DebugPrint("Time Since Boot: ");
     DebugPrintNum(PIT::TimeSinceBoot);
     DebugPrint("\n");
 
+    // DebugPrint("Statred Scheduling for multTasking\n");
     DebugPrint("Done.. Haulting\n");
 
     while(true);
